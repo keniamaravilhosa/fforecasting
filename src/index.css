@@ -2,41 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* FForecasting Design System - Terracotta & Peach Fashion Intelligence Theme
+Based on logo colors: terracotta brown (#743f07), peach (#febf77), cream (#f8fce5)
+All colors in HSL format for perfect harmony.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    /* Core Brand Palette - From Logo */
+    --terracotta: 30 85% 24%;        /* #743f07 - Primary terracotta */
+    --peach: 34 98% 73%;             /* #febf77 - Secondary peach accent */
+    --cream: 75 85% 95%;             /* #f8fce5 - Background cream */
+    
+    /* Extended Brand Palette */
+    --dark-terracotta: 30 85% 19%;   /* #5a3005 - Dark brown for text */
+    --medium-terracotta: 30 54% 35%; /* #8a5b2c - Medium brown elements */
+    --light-peach: 34 100% 83%;      /* #ffd8ac - Light peach for hover */
+    --warm-white: 60 100% 98%;       /* #fefdf5 - Warm white alternative */
+    
+    /* Neutral Palette */
+    --warm-gray: 30 17% 36%;         /* #6b5c4d - Secondary text */
+    --light-warm-gray: 30 15% 80%;   /* #d1c8bd - Borders & dividers */
+    
+    /* Semantic Colors (Harmonized) */
+    --success-green: 78 21% 44%;     /* #7a8c5a - Earth green for success */
+    --warning-amber: 37 33% 59%;     /* #d4a15f - Warm amber for warnings */
+    --attention-coral: 12 53% 49%;   /* #c45c3d - Terracotta coral for alerts */
+    
+    /* System Colors - Using Brand Palette */
+    --background: var(--cream);
+    --foreground: var(--dark-terracotta);
+    
+    --card: var(--warm-white);
+    --card-foreground: var(--dark-terracotta);
+    
+    --popover: var(--warm-white);
+    --popover-foreground: var(--dark-terracotta);
+    
+    --primary: var(--terracotta);
+    --primary-foreground: var(--warm-white);
+    
+    --secondary: var(--peach);
+    --secondary-foreground: var(--dark-terracotta);
+    
+    --muted: var(--light-warm-gray);
+    --muted-foreground: var(--warm-gray);
+    
+    --accent: var(--light-peach);
+    --accent-foreground: var(--dark-terracotta);
+    
+    --destructive: var(--attention-coral);
+    --destructive-foreground: var(--warm-white);
+    
+    --border: var(--light-warm-gray);
+    --input: var(--light-warm-gray);
+    --ring: var(--terracotta);
+    
+    /* Design System Values */
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -56,33 +79,34 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Dark theme maintains brand harmony */
+    --background: var(--dark-terracotta);
+    --foreground: var(--cream);
+    
+    --card: var(--medium-terracotta);
+    --card-foreground: var(--cream);
+    
+    --popover: var(--medium-terracotta);
+    --popover-foreground: var(--cream);
+    
+    --primary: var(--peach);
+    --primary-foreground: var(--dark-terracotta);
+    
+    --secondary: var(--medium-terracotta);
+    --secondary-foreground: var(--cream);
+    
+    --muted: var(--medium-terracotta);
+    --muted-foreground: var(--light-warm-gray);
+    
+    --accent: var(--light-peach);
+    --accent-foreground: var(--dark-terracotta);
+    
+    --destructive: var(--attention-coral);
+    --destructive-foreground: var(--cream);
+    
+    --border: var(--medium-terracotta);
+    --input: var(--medium-terracotta);
+    --ring: var(--peach);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -101,5 +125,34 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  /* Typography System */
+  h1, h2, h3, h4, h5, h6, .heading {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    color: hsl(var(--dark-terracotta));
+  }
+  
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: hsl(var(--terracotta));
+  }
+  
+  /* Score System Colors */
+  .score-excellent { color: hsl(var(--success-green)); }
+  .score-good { color: hsl(var(--medium-terracotta)); }
+  .score-average { color: hsl(var(--warning-amber)); }
+  .score-poor { color: hsl(var(--attention-coral)); }
+  
+  /* Custom gradients */
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--terracotta)), hsl(var(--peach)));
+  }
+  
+  .gradient-subtle {
+    background: linear-gradient(180deg, hsl(var(--cream)), hsl(var(--warm-white)));
   }
 }

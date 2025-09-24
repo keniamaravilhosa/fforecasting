@@ -13,7 +13,23 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        'heading': ['Playfair Display', 'serif'],
+        'body': ['Inter', 'sans-serif'],
+      },
       colors: {
+        /* Brand Colors */
+        terracotta: "hsl(var(--terracotta))",
+        peach: "hsl(var(--peach))",
+        cream: "hsl(var(--cream))",
+        "dark-terracotta": "hsl(var(--dark-terracotta))",
+        "medium-terracotta": "hsl(var(--medium-terracotta))",
+        "light-peach": "hsl(var(--light-peach))",
+        "warm-white": "hsl(var(--warm-white))",
+        "warm-gray": "hsl(var(--warm-gray))",
+        "light-warm-gray": "hsl(var(--light-warm-gray))",
+        
+        /* System Colors */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
