@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,45 +11,95 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Palette, Crown, Gift } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+
+const stylistSchema = z.object({
+  fullName: z.string().min(1, "Nome é obrigatório"),
+  experience: z.enum(['iniciante', '1-3_anos', '3-5_anos', '5-10_anos', 'mais_10_anos']),
+  portfolio: z.string().optional(),
+  specialties: z.array(z.string()).optional(),
+});
+
+type StylistFormData = z.infer<typeof stylistSchema>;
 
 interface StylistRegistrationProps {
   onBack: () => void;
 }
 
 const StylistRegistration = ({ onBack }: StylistRegistrationProps) => {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    experience: "",
-    specialties: [],
-    portfolio: "",
-    agreeTerms: false
+  const [loading, setLoading] = useState(false);
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const form = useForm<StylistFormData>({
+    resolver: zodResolver(stylistSchema),
+    defaultValues: {
+      fullName: "",
+      experience: "1-3_anos",
+      portfolio: "",
+      specialties: [],
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.agreeTerms) {
-      toast({
-        title: "Termos e Condições",
-        description: "Por favor, aceite os termos e condições para continuar.",
-        variant: "destructive"
-      });
+  const handleSpecialtyChange = (specialty: string, checked: boolean) => {
+    let newSpecialties = [...selectedSpecialties];
+    if (checked) {
+      newSpecialties.push(specialty);
+    } else {
+      newSpecialties = newSpecialties.filter(s => s !== specialty);
+    }
+    setSelectedSpecialties(newSpecialties);
+    form.setValue("specialties", newSpecialties);
+  };
+
+  const handleSubmit = async (data: StylistFormData) => {
+    if (!user) {
+      toast.error("Você precisa estar logado para continuar");
       return;
     }
 
-    toast({
-      title: "Conta criada com sucesso!",
-      description: "Bem-vindo ao FForecasting! Comece indicando marcas para ganhar acesso premium.",
-    });
+    setLoading(true);
+    
+    try {
+      // Create profile first
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          user_type: 'stylist',
+          full_name: data.fullName,
+          email: user.email || '',
+        })
+        .select()
+        .single();
 
-    // In a real app, this would redirect to stylist dashboard
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 2000);
+      if (profileError) throw profileError;
+
+      // Create stylist data
+      const { error: stylistError } = await supabase
+        .from('stylists')
+        .insert({
+          profile_id: profile.id,
+          experience: data.experience,
+          portfolio: data.portfolio || null,
+          specialties: selectedSpecialties,
+          premium_access: false,
+        });
+
+      if (stylistError) throw stylistError;
+
+      toast.success("Cadastro realizado com sucesso! Bem-vindo ao FForecasting!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error(error.message || "Erro ao criar conta. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,7 +147,7 @@ const StylistRegistration = ({ onBack }: StylistRegistrationProps) => {
                 </ul>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Informações Profissionais</h3>
@@ -102,37 +155,15 @@ const StylistRegistration = ({ onBack }: StylistRegistrationProps) => {
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Nome Completo *</Label>
                     <Input
+                      {...form.register("fullName")}
                       id="fullName"
                       placeholder="Seu nome profissional"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                      required
                     />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Profissional *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Mínimo 8 caracteres"
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                      minLength={8}
-                    />
+                    {form.formState.errors.fullName && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.fullName.message}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -142,26 +173,31 @@ const StylistRegistration = ({ onBack }: StylistRegistrationProps) => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="experience">Tempo de Experiência *</Label>
-                    <Select value={formData.experience} onValueChange={(value) => setFormData(prev => ({ ...prev, experience: value }))}>
+                    <Select value={form.watch("experience")} onValueChange={(value) => form.setValue("experience", value as any)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione sua experiência" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1-2">1-2 anos</SelectItem>
-                        <SelectItem value="3-5">3-5 anos</SelectItem>
-                        <SelectItem value="6-10">6-10 anos</SelectItem>
-                        <SelectItem value="10+">Mais de 10 anos</SelectItem>
+                        <SelectItem value="iniciante">Iniciante</SelectItem>
+                        <SelectItem value="1-3_anos">1-3 anos</SelectItem>
+                        <SelectItem value="3-5_anos">3-5 anos</SelectItem>
+                        <SelectItem value="5-10_anos">5-10 anos</SelectItem>
+                        <SelectItem value="mais_10_anos">Mais de 10 anos</SelectItem>
                       </SelectContent>
                     </Select>
+                    {form.formState.errors.experience && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.experience.message}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="portfolio">Portfolio/Instagram (Opcional)</Label>
                     <Input
+                      {...form.register("portfolio")}
                       id="portfolio"
                       placeholder="https://instagram.com/seu_perfil ou link do portfolio"
-                      value={formData.portfolio}
-                      onChange={(e) => setFormData(prev => ({ ...prev, portfolio: e.target.value }))}
                       type="url"
                     />
                   </div>
@@ -178,7 +214,11 @@ const StylistRegistration = ({ onBack }: StylistRegistrationProps) => {
                         "Editorial Fashion"
                       ].map((specialty) => (
                         <div key={specialty} className="flex items-center space-x-2">
-                          <Checkbox id={specialty} />
+                          <Checkbox 
+                            id={specialty} 
+                            checked={selectedSpecialties.includes(specialty)}
+                            onCheckedChange={(checked) => handleSpecialtyChange(specialty, checked as boolean)}
+                          />
                           <Label htmlFor={specialty} className="text-sm font-normal">
                             {specialty}
                           </Label>
@@ -188,30 +228,12 @@ const StylistRegistration = ({ onBack }: StylistRegistrationProps) => {
                   </div>
                 </div>
 
-                {/* Terms */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="terms"
-                    checked={formData.agreeTerms}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, agreeTerms: checked as boolean }))}
-                  />
-                  <Label htmlFor="terms" className="text-sm">
-                    Aceito os{" "}
-                    <a href="#" className="text-terracotta hover:underline">
-                      Termos de Uso
-                    </a>{" "}
-                    e{" "}
-                    <a href="#" className="text-terracotta hover:underline">
-                      Política de Privacidade
-                    </a>
-                  </Label>
-                </div>
-
                 <Button 
                   type="submit" 
                   className="w-full bg-terracotta hover:bg-dark-terracotta text-white"
+                  disabled={loading}
                 >
-                  Criar Conta e Acessar Rede
+                  {loading ? "Criando conta..." : "Criar Conta e Acessar Rede"}
                 </Button>
               </form>
             </CardContent>

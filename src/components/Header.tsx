@@ -1,9 +1,18 @@
 import { Button } from "@/components/ui/button";
 import logoIcon from "@/assets/logo-icon.jpg";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 
 const Header = () => {
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const { profile } = useProfile();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -29,19 +38,45 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="ghost" 
-            className="text-sm"
-            onClick={() => navigate('/dashboard')}
-          >
-            Entrar
-          </Button>
-          <Button 
-            className="text-sm bg-terracotta hover:bg-dark-terracotta"
-            onClick={() => navigate('/register')}
-          >
-            Começar Agora
-          </Button>
+          {user ? (
+            <>
+              {profile && (
+                <span className="text-sm text-secondary">
+                  Olá, {profile.full_name}
+                </span>
+              )}
+              <Button 
+                variant="ghost" 
+                className="text-sm"
+                onClick={() => navigate('/dashboard')}
+              >
+                Dashboard
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="text-sm"
+                onClick={handleSignOut}
+              >
+                Sair
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button 
+                variant="ghost" 
+                className="text-sm"
+                onClick={() => navigate('/auth')}
+              >
+                Entrar
+              </Button>
+              <Button 
+                className="text-sm bg-terracotta hover:bg-dark-terracotta"
+                onClick={() => navigate('/register')}
+              >
+                Começar Agora
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

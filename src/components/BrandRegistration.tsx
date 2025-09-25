@@ -1,52 +1,94 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Store } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+
+const brandSchema = z.object({
+  brandName: z.string().min(1, "Nome da marca é obrigatório"),
+  targetAudience: z.enum(['15-19_anos', '20-29_anos', '30-45_anos', '46-60_anos', '60+_anos']),
+  priceRange: z.enum(['popular_100', 'medio_300', 'alto_600', 'luxo']),
+  businessModel: z.enum(['b2b', 'b2c', 'marketplace', 'atacado_varejo']),
+  mainChallenges: z.string().optional(),
+});
+
+type BrandFormData = z.infer<typeof brandSchema>;
 
 interface BrandRegistrationProps {
   onBack: () => void;
 }
 
 const BrandRegistration = ({ onBack }: BrandRegistrationProps) => {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({
-    brandName: "",
-    email: "",
-    password: "",
-    targetAudience: "",
-    priceRange: "",
-    businessModel: "",
-    mainChallenges: "",
-    agreeTerms: false
+  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const form = useForm<BrandFormData>({
+    resolver: zodResolver(brandSchema),
+    defaultValues: {
+      brandName: "",
+      targetAudience: "20-29_anos",
+      priceRange: "medio_300",
+      businessModel: "b2c",
+      mainChallenges: "",
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.agreeTerms) {
-      toast({
-        title: "Termos e Condições",
-        description: "Por favor, aceite os termos e condições para continuar.",
-        variant: "destructive"
-      });
+  const handleSubmit = async (data: BrandFormData) => {
+    if (!user) {
+      toast.error("Você precisa estar logado para continuar");
       return;
     }
 
-    toast({
-      title: "Conta criada com sucesso!",
-      description: "Redirecionando para seu dashboard personalizado...",
-    });
+    setLoading(true);
+    
+    try {
+      // Create profile first
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          user_id: user.id,
+          user_type: 'brand',
+          full_name: data.brandName,
+          email: user.email || '',
+        })
+        .select()
+        .single();
 
-    // In a real app, this would redirect to dashboard
-    setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 2000);
+      if (profileError) throw profileError;
+
+      // Create brand data
+      const { error: brandError } = await supabase
+        .from('brands')
+        .insert({
+          profile_id: profile.id,
+          brand_name: data.brandName,
+          target_audience: data.targetAudience,
+          price_range: data.priceRange,
+          business_model: data.businessModel,
+          main_challenges: data.mainChallenges || null,
+        });
+
+      if (brandError) throw brandError;
+
+      toast.success("Cadastro realizado com sucesso!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error(error.message || "Erro ao criar conta. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -74,45 +116,23 @@ const BrandRegistration = ({ onBack }: BrandRegistrationProps) => {
             </CardHeader>
             
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                 {/* Basic Info */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Informações Básicas</h3>
+                  <h3 className="font-semibold text-lg">Informações da Marca</h3>
                   
                   <div className="space-y-2">
                     <Label htmlFor="brandName">Nome da Marca *</Label>
                     <Input
+                      {...form.register("brandName")}
                       id="brandName"
                       placeholder="Ex: Sua Marca Fashion"
-                      value={formData.brandName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, brandName: e.target.value }))}
-                      required
                     />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Profissional *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="contato@suamarca.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Mínimo 8 caracteres"
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                      minLength={8}
-                    />
+                    {form.formState.errors.brandName && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.brandName.message}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -122,86 +142,82 @@ const BrandRegistration = ({ onBack }: BrandRegistrationProps) => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="targetAudience">Público-Alvo Principal *</Label>
-                    <Select value={formData.targetAudience} onValueChange={(value) => setFormData(prev => ({ ...prev, targetAudience: value }))}>
+                    <Select value={form.watch("targetAudience")} onValueChange={(value) => form.setValue("targetAudience", value as any)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione seu público principal" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="gen-z">Geração Z (18-24 anos)</SelectItem>
-                        <SelectItem value="millennial">Millennials (25-40 anos)</SelectItem>
-                        <SelectItem value="gen-x">Geração X (41-55 anos)</SelectItem>
-                        <SelectItem value="mixed">Público Misto</SelectItem>
+                        <SelectItem value="15-19_anos">15-19 anos</SelectItem>
+                        <SelectItem value="20-29_anos">20-29 anos</SelectItem>
+                        <SelectItem value="30-45_anos">30-45 anos</SelectItem>
+                        <SelectItem value="46-60_anos">46-60 anos</SelectItem>
+                        <SelectItem value="60+_anos">60+ anos</SelectItem>
                       </SelectContent>
                     </Select>
+                    {form.formState.errors.targetAudience && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.targetAudience.message}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="priceRange">Faixa de Preço *</Label>
-                    <Select value={formData.priceRange} onValueChange={(value) => setFormData(prev => ({ ...prev, priceRange: value }))}>
+                    <Select value={form.watch("priceRange")} onValueChange={(value) => form.setValue("priceRange", value as any)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione sua faixa de preço" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="budget">Econômica (R$ 20-80)</SelectItem>
-                        <SelectItem value="mid">Intermediária (R$ 80-200)</SelectItem>
-                        <SelectItem value="premium">Premium (R$ 200-500)</SelectItem>
-                        <SelectItem value="luxury">Luxo (R$ 500+)</SelectItem>
+                        <SelectItem value="popular_100">Popular (até R$ 100)</SelectItem>
+                        <SelectItem value="medio_300">Médio (R$ 100-300)</SelectItem>
+                        <SelectItem value="alto_600">Alto (R$ 300-600)</SelectItem>
+                        <SelectItem value="luxo">Luxo (R$ 600+)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {form.formState.errors.priceRange && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.priceRange.message}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="businessModel">Modelo de Negócio *</Label>
-                    <Select value={formData.businessModel} onValueChange={(value) => setFormData(prev => ({ ...prev, businessModel: value }))}>
+                    <Select value={form.watch("businessModel")} onValueChange={(value) => form.setValue("businessModel", value as any)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Como você vende?" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ecommerce">E-commerce Próprio</SelectItem>
+                        <SelectItem value="b2c">B2C (Direto ao Consumidor)</SelectItem>
+                        <SelectItem value="b2b">B2B (Atacado/Lojistas)</SelectItem>
                         <SelectItem value="marketplace">Marketplaces</SelectItem>
-                        <SelectItem value="physical">Loja Física</SelectItem>
-                        <SelectItem value="hybrid">Híbrido (Online + Física)</SelectItem>
-                        <SelectItem value="wholesale">Atacado/Distribuição</SelectItem>
+                        <SelectItem value="atacado_varejo">Atacado e Varejo</SelectItem>
                       </SelectContent>
                     </Select>
+                    {form.formState.errors.businessModel && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.businessModel.message}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="mainChallenges">Principais Desafios (Opcional)</Label>
                     <Textarea
+                      {...form.register("mainChallenges")}
                       id="mainChallenges"
                       placeholder="Conte-nos sobre os principais desafios da sua marca em relação a tendências..."
-                      value={formData.mainChallenges}
-                      onChange={(e) => setFormData(prev => ({ ...prev, mainChallenges: e.target.value }))}
                       rows={3}
                     />
                   </div>
                 </div>
 
-                {/* Terms */}
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="terms"
-                    checked={formData.agreeTerms}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, agreeTerms: checked as boolean }))}
-                  />
-                  <Label htmlFor="terms" className="text-sm">
-                    Aceito os{" "}
-                    <a href="#" className="text-terracotta hover:underline">
-                      Termos de Uso
-                    </a>{" "}
-                    e{" "}
-                    <a href="#" className="text-terracotta hover:underline">
-                      Política de Privacidade
-                    </a>
-                  </Label>
-                </div>
-
                 <Button 
                   type="submit" 
                   className="w-full bg-terracotta hover:bg-dark-terracotta text-white"
+                  disabled={loading}
                 >
-                  Criar Conta e Acessar Dashboard
+                  {loading ? "Criando conta..." : "Criar Conta e Acessar Dashboard"}
                 </Button>
               </form>
             </CardContent>

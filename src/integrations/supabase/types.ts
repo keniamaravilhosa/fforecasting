@@ -14,7 +14,175 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      brand_invites: {
+        Row: {
+          brand_email: string
+          brand_id: string | null
+          brand_name: string
+          created_at: string
+          expires_at: string
+          id: string
+          invite_code: string
+          status: Database["public"]["Enums"]["invite_status"]
+          stylist_id: string
+          updated_at: string
+        }
+        Insert: {
+          brand_email: string
+          brand_id?: string | null
+          brand_name: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code: string
+          status?: Database["public"]["Enums"]["invite_status"]
+          stylist_id: string
+          updated_at?: string
+        }
+        Update: {
+          brand_email?: string
+          brand_id?: string | null
+          brand_name?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code?: string
+          status?: Database["public"]["Enums"]["invite_status"]
+          stylist_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_invites_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_invites_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "stylists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brands: {
+        Row: {
+          brand_name: string
+          business_model: Database["public"]["Enums"]["business_model"]
+          created_at: string
+          id: string
+          main_challenges: string | null
+          price_range: Database["public"]["Enums"]["price_range"]
+          profile_id: string
+          target_audience: Database["public"]["Enums"]["target_audience"]
+          updated_at: string
+        }
+        Insert: {
+          brand_name: string
+          business_model: Database["public"]["Enums"]["business_model"]
+          created_at?: string
+          id?: string
+          main_challenges?: string | null
+          price_range: Database["public"]["Enums"]["price_range"]
+          profile_id: string
+          target_audience: Database["public"]["Enums"]["target_audience"]
+          updated_at?: string
+        }
+        Update: {
+          brand_name?: string
+          business_model?: Database["public"]["Enums"]["business_model"]
+          created_at?: string
+          id?: string
+          main_challenges?: string | null
+          price_range?: Database["public"]["Enums"]["price_range"]
+          profile_id?: string
+          target_audience?: Database["public"]["Enums"]["target_audience"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brands_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Relationships: []
+      }
+      stylists: {
+        Row: {
+          created_at: string
+          experience: Database["public"]["Enums"]["experience_level"]
+          id: string
+          portfolio: string | null
+          premium_access: boolean
+          profile_id: string
+          specialties: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          experience: Database["public"]["Enums"]["experience_level"]
+          id?: string
+          portfolio?: string | null
+          premium_access?: boolean
+          profile_id: string
+          specialties?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          experience?: Database["public"]["Enums"]["experience_level"]
+          id?: string
+          portfolio?: string | null
+          premium_access?: boolean
+          profile_id?: string
+          specialties?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylists_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +191,77 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      brand_interests:
+        | "aumentar_ticket_medio"
+        | "atrair_publico"
+        | "consolidar_publico"
+        | "aumentar_categorias"
+        | "melhorar_producao"
+      business_model: "b2b" | "b2c" | "marketplace" | "atacado_varejo"
+      clients_inspiration:
+        | "instagram"
+        | "pinterest"
+        | "tik_tok"
+        | "famosos"
+        | "desfiles"
+      delivery: "3_dias" | "4_7_dias" | "8_15_dias" | "mais_15_dias"
+      experience_level:
+        | "iniciante"
+        | "1-3_anos"
+        | "3-5_anos"
+        | "5-10_anos"
+        | "mais_10_anos"
+      favorite_clothes:
+        | "calca_jeans"
+        | "saia_longa"
+        | "blusa_alça"
+        | "blusa_manga"
+        | "regata"
+        | "vestido_curto"
+        | "vestido_longo"
+        | "calça_alfaiataria"
+        | "short"
+        | "cropped"
+        | "bermuda"
+        | "legging"
+        | "saia_curta"
+        | "saia_reta"
+        | "camisa"
+        | "jaqueta"
+        | "blusa_frio"
+        | "biquine"
+        | "maio"
+        | "body"
+        | "saida_de_praia"
+      invite_status: "pending" | "accepted" | "expired"
+      life_style:
+        | "classica"
+        | "urbana"
+        | "fashionista"
+        | "minimalista"
+        | "executiva"
+        | "boemia"
+      price_range: "popular_100" | "medio_300" | "alto_600" | "luxo"
+      production_model:
+        | "pronta_entrega"
+        | "sob_encomenda"
+        | "pre_venda"
+        | "dropshipping"
+      segment:
+        | "luxo"
+        | "premium"
+        | "fast_fashion"
+        | "sustentavel"
+        | "praia"
+        | "fitness"
+        | "jeanswear"
+      target_audience:
+        | "15-19_anos"
+        | "20-29_anos"
+        | "30-45_anos"
+        | "46-60_anos"
+        | "60+_anos"
+      user_type: "brand" | "stylist"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +388,86 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      brand_interests: [
+        "aumentar_ticket_medio",
+        "atrair_publico",
+        "consolidar_publico",
+        "aumentar_categorias",
+        "melhorar_producao",
+      ],
+      business_model: ["b2b", "b2c", "marketplace", "atacado_varejo"],
+      clients_inspiration: [
+        "instagram",
+        "pinterest",
+        "tik_tok",
+        "famosos",
+        "desfiles",
+      ],
+      delivery: ["3_dias", "4_7_dias", "8_15_dias", "mais_15_dias"],
+      experience_level: [
+        "iniciante",
+        "1-3_anos",
+        "3-5_anos",
+        "5-10_anos",
+        "mais_10_anos",
+      ],
+      favorite_clothes: [
+        "calca_jeans",
+        "saia_longa",
+        "blusa_alça",
+        "blusa_manga",
+        "regata",
+        "vestido_curto",
+        "vestido_longo",
+        "calça_alfaiataria",
+        "short",
+        "cropped",
+        "bermuda",
+        "legging",
+        "saia_curta",
+        "saia_reta",
+        "camisa",
+        "jaqueta",
+        "blusa_frio",
+        "biquine",
+        "maio",
+        "body",
+        "saida_de_praia",
+      ],
+      invite_status: ["pending", "accepted", "expired"],
+      life_style: [
+        "classica",
+        "urbana",
+        "fashionista",
+        "minimalista",
+        "executiva",
+        "boemia",
+      ],
+      price_range: ["popular_100", "medio_300", "alto_600", "luxo"],
+      production_model: [
+        "pronta_entrega",
+        "sob_encomenda",
+        "pre_venda",
+        "dropshipping",
+      ],
+      segment: [
+        "luxo",
+        "premium",
+        "fast_fashion",
+        "sustentavel",
+        "praia",
+        "fitness",
+        "jeanswear",
+      ],
+      target_audience: [
+        "15-19_anos",
+        "20-29_anos",
+        "30-45_anos",
+        "46-60_anos",
+        "60+_anos",
+      ],
+      user_type: ["brand", "stylist"],
+    },
   },
 } as const
