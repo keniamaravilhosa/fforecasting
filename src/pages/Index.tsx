@@ -2,10 +2,8 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import { Button } from "@/components/ui/button";
-
 const Index = () => {
-  return (
-    <div className="flex flex-col min-h-screen">
+  return <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1">
         <Hero />
@@ -14,19 +12,10 @@ const Index = () => {
         {/* CTA Section */}
         <section className="py-20 bg-terracotta text-white">
           <div className="container px-4 md:px-6 text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-              Fashion For Growth. Fashion For Data.
-            </h2>
-            <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-              Contra dados não há argumentos. Junte-se à revolução da inteligência em moda.
-            </p>
+            <h2 className="text-3xl font-bold tracking-tight mb-4 sm:text-[t] text-white">Contra Dados Não Há Argumentos !</h2>
+            <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto">Fashion For Growth. Fashion For Data. Fashion Forecasting.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                variant="secondary" 
-                className="bg-white text-terracotta hover:bg-cream"
-                onClick={() => window.location.href = '/register'}
-              >
+              <Button size="lg" variant="secondary" className="bg-white text-terracotta hover:bg-cream" onClick={() => window.location.href = '/register'}>
                 Começar Gratuitamente
               </Button>
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
@@ -77,8 +66,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
