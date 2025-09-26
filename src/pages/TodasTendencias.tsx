@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TendenciaDetalheModal } from "@/components/TendenciaDetalheModal";
-import Header from "@/components/Header";
+import HeaderComponent from "@/components/Header";
 
 interface Tendencia {
   id: number;
@@ -99,7 +99,7 @@ export default function TodasTendencias() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <HeaderComponent />
       
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
