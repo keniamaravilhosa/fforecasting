@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Target, BarChart3, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative py-20 lg:py-32 overflow-hidden">
       {/* Background gradient */}
@@ -25,7 +27,7 @@ const Hero = () => {
               <Button 
                 size="lg" 
                 className="bg-terracotta hover:bg-dark-terracotta text-white"
-                onClick={() => window.location.href = '/register'}
+                onClick={() => navigate('/register')}
               >
                 Começar Gratuitamente
               </Button>
