@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -164,10 +165,12 @@ const BrandDashboard = () => {
                       Baseado no seu público: Millennials (25-40) • Preço Premium • E-commerce
                     </CardDescription>
                   </div>
-                  <Button variant="outline" size="sm">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Ver Todas
-                  </Button>
+                  <Link to="/todas-tendencias">
+                    <Button variant="outline" size="sm">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Ver Todas
+                    </Button>
+                  </Link>
                 </div>
               </CardHeader>
               <CardContent>
