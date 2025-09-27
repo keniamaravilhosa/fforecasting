@@ -4,16 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TrendsCarousel } from "@/components/ui/TrendsCarousel";
 import { 
   Gift, 
   Users, 
   Crown, 
   Copy, 
   ExternalLink,
-  TrendingUp,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Palette, 
+  Shirt, 
+  Leaf, 
+  Sparkles 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,11 +30,51 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
   const [inviteLink] = useState("https://fforecasting.com/invite/FFORECAST-ABC123");
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   
-  // Mock data
+  // Mock data - Invitations
   const invitations = [
     { id: 1, brandName: "Bella Boutique", email: "contato@bella.com", status: "accepted", date: "2024-01-15" },
     { id: 2, brandName: "Style Maven", email: "hello@stylemaven.com", status: "pending", date: "2024-01-10" },
     { id: 3, brandName: "Chic Closet", email: "info@chiccloset.com", status: "expired", date: "2024-01-05" }
+  ];
+
+  // Trends Data - CORRIGIDO: fora da função getStatusColor
+  const trendsData = [
+    {
+      id: 1,
+      icon: Palette,
+      title: "Cottagecore Aesthetic: O Novo Romantismo Rural",
+      description: "Movimento que celebra simplicidade e conexão com a natureza atinge 92% de engajamento no TikTok.",
+      image: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=500&h=300&fit=crop",
+      category: "Estilo",
+      score: 92
+    },
+    {
+      id: 2,
+      icon: Shirt,
+      title: "Moda Sem Gênero: A Revolução Inclusiva",
+      description: "Consumidores jovens buscam expressão livre através de peças unissex - crescimento de 78% em 2024.",
+      image: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500&h=300&fit=crop",
+      category: "Comportamento",
+      score: 78
+    },
+    {
+      id: 3,
+      icon: Leaf,
+      title: "Sustentabilidade como Diferencial Competitivo",
+      description: "Marcas com práticas eco-friendly registram 65% mais fidelidade entre millennials.",
+      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=500&h=300&fit=crop",
+      category: "Valores",
+      score: 65
+    },
+    {
+      id: 4,
+      icon: Sparkles,
+      title: "Tecnologia Wearable na Moda",
+      description: "Integração entre moda e tecnologia cresce 45% com peças inteligentes e conectadas.",
+      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=300&fit=crop",
+      category: "Inovação",
+      score: 45
+    }
   ];
 
   const copyInviteLink = () => {
@@ -140,7 +184,7 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
         </DialogContent>
       </Dialog>
 
-      {/* CONTEÚDO ORIGINAL DO DASHBOARD */}
+      {/* CONTEÚDO DO DASHBOARD */}
       <div className="py-8">
         <div className="container px-4 md:px-6">
           <div className="mb-8">
@@ -215,7 +259,7 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                 <CardTitle className="text-sm font-medium">
                   Taxa de Conversão
                 </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">33%</div>
@@ -224,6 +268,11 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                 </p>
               </CardContent>
             </Card>
+          </div>
+
+          {/* ⭐ NOVO COMPONENTE DE TENDÊNCIAS */}
+          <div className="mb-8">
+            <TrendsCarousel trends={trendsData} />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
@@ -331,7 +380,7 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                     <span className="text-sm">Scores completos das tendências</span>
                   </div>
                   <div className={`flex items-center gap-3 ${hasPremiumAccess ? '' : 'opacity-60'}`}>
-                    <TrendingUp className={`h-4 w-4 ${hasPremiumAccess ? 'text-terracotta' : 'text-gray-400'}`} />
+                    <Users className={`h-4 w-4 ${hasPremiumAccess ? 'text-terracotta' : 'text-gray-400'}`} />
                     <span className="text-sm">Ranking prioritário de insights</span>
                   </div>
                   <div className={`flex items-center gap-3 ${hasPremiumAccess ? '' : 'opacity-60'}`}>
