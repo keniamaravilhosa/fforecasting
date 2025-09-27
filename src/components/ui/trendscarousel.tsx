@@ -1,6 +1,3 @@
-// src/components/ui/TrendsCarousel.tsx
-"use client";
-
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
