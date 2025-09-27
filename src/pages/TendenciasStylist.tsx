@@ -18,7 +18,7 @@ import {
   Users,
   TrendingUp
 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 // Mock data - Tendências ESPECÍFICAS para estilistas
 const tendenciasStylist = [
@@ -130,7 +130,7 @@ export default function TendenciasStylist() {
       <div className="container px-4 md:px-6 max-w-6xl mx-auto">
         {/* Header Específico para Estilistas */}
         <div className="mb-8">
-          <Link href="/stylist-dashboard" className="inline-flex items-center text-terracotta hover:text-dark-terracotta mb-4">
+          <Link to="/stylist-dashboard" className="inline-flex items-center text-terracotta hover:text-dark-terracotta mb-4">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Voltar ao Dashboard
           </Link>

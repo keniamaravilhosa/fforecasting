@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 interface Trend {
   id: number;
@@ -126,14 +126,14 @@ export function TrendsCarousel({ trends }: TrendsCarouselProps) {
           })}
 
           {/* Ver Mais Button */}
-          <div className="flex justify-center pt-4"> {/* ✅ ADICIONEI ESTA DIV */}
-            <Link href="/tendencias-stylist">
+          <div className="flex justify-center pt-4">
+            <Link to="/tendencias-stylist">
               <Button className="bg-terracotta hover:bg-dark-terracotta text-white px-6 py-2">
                 Ver Mais Tendências
               </Button>
             </Link>
           </div>
-        </div> {/* ✅ ESTA DIV FECHA A COLUNA DA ESQUERDA */}
+        </div>
 
         {/* Right Side - Featured Trend */}
         <Card className="sticky top-4">
@@ -169,7 +169,7 @@ export function TrendsCarousel({ trends }: TrendsCarouselProps) {
             </motion.div>
           </CardContent>
         </Card>
-      </div> {/* ✅ ESTA DIV FECHA O GRID PRINCIPAL */}
+      </div>
     </div>
   );
 }
