@@ -16,6 +16,23 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// PROCURE ESTES IMPORTS EXISTENTES:
+import { 
+  Gift, 
+  Users, 
+  Crown, 
+  Copy, 
+  ExternalLink,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  XCircle
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+// ↓ ADICIONE ESTA LINHA ABAIXO ↓
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
 interface StylistDashboardProps {
   hasPremiumAccess: boolean;
 }
@@ -72,6 +89,94 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
     }
   };
 
+  // PROCURE ESTAS STATES EXISTENTES:
+const { toast } = useToast();
+const [inviteLink] = useState("https://fforecasting.com/invite/FFORECAST-ABC123");
+
+// ↓ ADICIONE ESTA LINHA ABAIXO ↓
+const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+
+// PROCURE ESTE RETURN EXISTENTE:
+return (
+  <div className="py-8">
+    {/* ... conteúdo atual ... */}
+  </div>
+);
+
+// ↓ SUBSTITUA O RETURN POR ISTO ↓
+return (
+  <>
+    {/* Modal de Boas-Vindas */}
+    <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-terracotta" />
+            Sistema de Convites - Como Funciona
+          </DialogTitle>
+        </DialogHeader>
+        
+        {/* CONTEÚDO DO CARD DE CONVITES - COPIE DA LINHA 161-182 */}
+        <div className="space-y-4">
+          <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Gift className="h-4 w-4 text-terracotta" />
+              <span className="font-semibold text-sm">Como Funciona</span>
+            </div>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>1. Gere seu link de convite único</li>
+              <li>2. Envie para marcas que você recomenda</li>
+              <li>3. Quando elas se cadastram, você ganha acesso premium</li>
+            </ul>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Seu Link de Convite</label>
+            <div className="flex gap-2">
+              <Input 
+                value={inviteLink}
+                readOnly
+                className="font-mono text-sm"
+              />
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={copyInviteLink}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button onClick={generateNewLink} className="bg-terracotta hover:bg-dark-terracotta">
+              Gerar Novo Link
+            </Button>
+            <Button variant="outline">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Compartilhar
+            </Button>
+          </div>
+        </div>
+        
+        <div className="flex justify-end pt-4">
+          <Button 
+            onClick={() => setShowWelcomeModal(false)}
+            className="bg-terracotta hover:bg-dark-terracotta"
+          >
+            Entendi, vamos começar!
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* CONTEÚDO ORIGINAL DO DASHBOARD */}
+    <div className="py-8">
+      {/* TODO O CÓDIGO EXISTENTE PERMANECE AQUI */}
+    </div>
+  </>
+);
+  
   return (
     <div className="py-8">
       <div className="container px-4 md:px-6">
