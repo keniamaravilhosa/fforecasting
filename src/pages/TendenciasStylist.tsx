@@ -11,12 +11,14 @@ import {
   ChevronRight, 
   Search,
   Calendar,
-  Eye,
   Download,
   Share2,
   Crown,
   Users,
-  TrendingUp
+  TrendingUp,
+  Sparkles,
+  BarChart3,
+  DollarSign
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -92,6 +94,13 @@ const tendenciasStylist = [
 
 const ITENS_POR_PAGINA = 20;
 
+// Função para converter score em classificação
+const getClassificacao = (score: number) => {
+  if (score >= 80) return { label: "Inovador", icon: Sparkles, color: "bg-purple-100 text-purple-800" };
+  if (score >= 40) return { label: "Em Crescimento", icon: BarChart3, color: "bg-blue-100 text-blue-800" };
+  return { label: "Comercial", icon: DollarSign, color: "bg-green-100 text-green-800" };
+};
+
 export default function TendenciasStylist() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [termoBusca, setTermoBusca] = useState("");
@@ -130,7 +139,7 @@ export default function TendenciasStylist() {
       <div className="container px-4 md:px-6 max-w-6xl mx-auto">
         {/* Header Específico para Estilistas */}
         <div className="mb-8">
-          <Link to="/stylist-dashboard" className="inline-flex items-center text-terracotta hover:text-dark-terracotta mb-4">
+          <Link to="/dashboard" className="inline-flex items-center text-terracotta hover:text-dark-terracotta mb-4">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Voltar ao Dashboard
           </Link>
@@ -204,9 +213,9 @@ export default function TendenciasStylist() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-terracotta">
-                {tendenciasStylist.reduce((acc, t) => acc + t.visualizacoes, 0).toLocaleString()}
+                {tendenciasStylist.filter(t => getClassificacao(t.score).label === "Inovador").length}
               </div>
-              <p className="text-sm text-muted-foreground">Visualizações</p>
+              <p className="text-sm text-muted-foreground">Inovadores</p>
             </CardContent>
           </Card>
         </div>
@@ -262,14 +271,18 @@ export default function TendenciasStylist() {
 
                     {/* Ações para Estilistas */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
-                          {tendencia.visualizacoes.toLocaleString()}
-                        </div>
-                        <div className="flex items-center">
-                          <TrendingUp className="h-4 w-4 mr-1" />
-                          Score: {tendencia.score}%
+                      <div className="flex items-center space-x-4 text-sm">
+                        <div className={`flex items-center px-2 py-1 rounded-full ${getClassificacao(tendencia.score).color}`}>
+                          {(() => {
+                            const classificacao = getClassificacao(tendencia.score);
+                            const IconComponent = classificacao.icon;
+                            return (
+                              <>
+                                <IconComponent className="h-4 w-4 mr-1" />
+                                {classificacao.label}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                       

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Sparkles, BarChart3, DollarSign } from "lucide-react";
 
 interface Trend {
   id: number;
@@ -17,6 +18,13 @@ interface Trend {
 interface TrendsCarouselProps {
   trends: Trend[];
 }
+
+// Função para converter score em classificação
+const getClassificacao = (score: number) => {
+  if (score >= 80) return { label: "Inovador", icon: Sparkles, color: "text-purple-600" };
+  if (score >= 40) return { label: "Em Crescimento", icon: BarChart3, color: "text-blue-600" };
+  return { label: "Comercial", icon: DollarSign, color: "text-green-600" };
+};
 
 export function TrendsCarousel({ trends }: TrendsCarouselProps) {
   const [currentTrend, setCurrentTrend] = useState(0);
@@ -82,11 +90,20 @@ export function TrendsCarousel({ trends }: TrendsCarouselProps) {
                       }`}>
                         <Icon size={18} />
                       </div>
-                      <span className={`text-xs font-medium mt-1 ${
+                      <div className={`text-xs font-medium mt-1 text-center ${
                         isActive ? "text-terracotta" : "text-gray-500"
                       }`}>
-                        {trend.score}%
-                      </span>
+                        {(() => {
+                          const classificacao = getClassificacao(trend.score);
+                          const ClassIcon = classificacao.icon;
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <ClassIcon size={12} className={classificacao.color} />
+                              <span>{classificacao.label}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
 
                     {/* Content */}
@@ -155,9 +172,18 @@ export function TrendsCarousel({ trends }: TrendsCarouselProps) {
                   <span className="text-xs font-medium text-terracotta bg-peach/20 px-2 py-1 rounded">
                     {trends[currentTrend].category}
                   </span>
-                  <span className="text-lg font-bold text-terracotta">
-                    {trends[currentTrend].score}%
-                  </span>
+                  <div className="flex items-center text-sm font-bold text-terracotta">
+                    {(() => {
+                      const classificacao = getClassificacao(trends[currentTrend].score);
+                      const ClassIcon = classificacao.icon;
+                      return (
+                        <>
+                          <ClassIcon size={16} className={`mr-1 ${classificacao.color}`} />
+                          {classificacao.label}
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
                 <h3 className="font-bold text-lg mb-2 text-gray-900">
                   {trends[currentTrend].title}
