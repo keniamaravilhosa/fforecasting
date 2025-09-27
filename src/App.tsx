@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
 import Auth from "./pages/Auth";
 import TodasTendencias from "./pages/TodasTendencias";
+import TendenciasStylist from "./pages/TendenciasStylist";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/todas-tendencias" element={<TodasTendencias />} />
+            <Route path="/tendencias-stylist" element={<TendenciasStylist />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
