@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -146,11 +145,9 @@ export function TrendsCarousel({ trends }: TrendsCarouselProps) {
               transition={{ duration: 0.3 }}
               className="relative"
             >
-              <Image
+              <img
                 src={trends[currentTrend].image}
                 alt={trends[currentTrend].title}
-                width={500}
-                height={300}
                 className="w-full h-48 object-cover rounded-t-lg"
               />
               <div className="p-4">

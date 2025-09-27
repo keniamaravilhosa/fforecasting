@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TrendsCarousel } from "@/components/ui/TrendsCarousel";
+import { TrendsCarousel } from "@/components/ui/trendscarousel";
 import { 
   Gift, 
   Users, 
