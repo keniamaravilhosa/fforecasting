@@ -3,35 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Gift, 
-  Users, 
-  Crown, 
-  Copy, 
-  ExternalLink,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  XCircle
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-// PROCURE ESTES IMPORTS EXISTENTES:
-import { 
-  Gift, 
-  Users, 
-  Crown, 
-  Copy, 
-  ExternalLink,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  XCircle
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-// ↓ ADICIONE ESTA LINHA ABAIXO ↓
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  Gift, 
+  Users, 
+  Crown, 
+  Copy, 
+  ExternalLink,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  XCircle
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface StylistDashboardProps {
   hasPremiumAccess: boolean;
@@ -40,6 +24,7 @@ interface StylistDashboardProps {
 const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
   const { toast } = useToast();
   const [inviteLink] = useState("https://fforecasting.com/invite/FFORECAST-ABC123");
+  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   
   // Mock data
   const invitations = [
@@ -89,322 +74,301 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
     }
   };
 
-  // PROCURE ESTAS STATES EXISTENTES:
-const { toast } = useToast();
-const [inviteLink] = useState("https://fforecasting.com/invite/FFORECAST-ABC123");
-
-// ↓ ADICIONE ESTA LINHA ABAIXO ↓
-const [showWelcomeModal, setShowWelcomeModal] = useState(true);
-
-// PROCURE ESTE RETURN EXISTENTE:
-return (
-  <div className="py-8">
-    {/* ... conteúdo atual ... */}
-  </div>
-);
-
-// ↓ SUBSTITUA O RETURN POR ISTO ↓
-return (
-  <>
-    {/* Modal de Boas-Vindas */}
-    <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-terracotta" />
-            Sistema de Convites - Como Funciona
-          </DialogTitle>
-        </DialogHeader>
-        
-        {/* CONTEÚDO DO CARD DE CONVITES - COPIE DA LINHA 161-182 */}
-        <div className="space-y-4">
-          <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Gift className="h-4 w-4 text-terracotta" />
-              <span className="font-semibold text-sm">Como Funciona</span>
-            </div>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>1. Gere seu link de convite único</li>
-              <li>2. Envie para marcas que você recomenda</li>
-              <li>3. Quando elas se cadastram, você ganha acesso premium</li>
-            </ul>
-          </div>
+  return (
+    <>
+      {/* Modal de Boas-Vindas */}
+      <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-terracotta" />
+              Sistema de Convites - Como Funciona
+            </DialogTitle>
+          </DialogHeader>
           
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Seu Link de Convite</label>
+          {/* CONTEÚDO DO CARD DE CONVITES */}
+          <div className="space-y-4">
+            <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="h-4 w-4 text-terracotta" />
+                <span className="font-semibold text-sm">Como Funciona</span>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>1. Gere seu link de convite único</li>
+                <li>2. Envie para marcas que você recomenda</li>
+                <li>3. Quando elas se cadastram, você ganha acesso premium</li>
+              </ul>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Seu Link de Convite</label>
+              <div className="flex gap-2">
+                <Input 
+                  value={inviteLink}
+                  readOnly
+                  className="font-mono text-sm"
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={copyInviteLink}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
             <div className="flex gap-2">
-              <Input 
-                value={inviteLink}
-                readOnly
-                className="font-mono text-sm"
-              />
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={copyInviteLink}
-              >
-                <Copy className="h-4 w-4" />
+              <Button onClick={generateNewLink} className="bg-terracotta hover:bg-dark-terracotta">
+                Gerar Novo Link
+              </Button>
+              <Button variant="outline">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Compartilhar
               </Button>
             </div>
           </div>
           
-          <div className="flex gap-2">
-            <Button onClick={generateNewLink} className="bg-terracotta hover:bg-dark-terracotta">
-              Gerar Novo Link
-            </Button>
-            <Button variant="outline">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Compartilhar
+          <div className="flex justify-end pt-4">
+            <Button 
+              onClick={() => setShowWelcomeModal(false)}
+              className="bg-terracotta hover:bg-dark-terracotta"
+            >
+              Entendi, vamos começar!
             </Button>
           </div>
-        </div>
-        
-        <div className="flex justify-end pt-4">
-          <Button 
-            onClick={() => setShowWelcomeModal(false)}
-            className="bg-terracotta hover:bg-dark-terracotta"
-          >
-            Entendi, vamos começar!
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
 
-    {/* CONTEÚDO ORIGINAL DO DASHBOARD */}
-    <div className="py-8">
-      {/* TODO O CÓDIGO EXISTENTE PERMANECE AQUI */}
-    </div>
-  </>
-);
-  
-  return (
-    <div className="py-8">
-      <div className="container px-4 md:px-6">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold">Dashboard do Estilista</h1>
-            {hasPremiumAccess && (
-              <Badge className="bg-peach text-terracotta">
-                <Crown className="h-3 w-3 mr-1" />
-                Premium
-              </Badge>
-            )}
+      {/* CONTEÚDO ORIGINAL DO DASHBOARD */}
+      <div className="py-8">
+        <div className="container px-4 md:px-6">
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold">Dashboard do Estilista</h1>
+              {hasPremiumAccess && (
+                <Badge className="bg-peach text-terracotta">
+                  <Crown className="h-3 w-3 mr-1" />
+                  Premium
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground">
+              {hasPremiumAccess 
+                ? "Acesso premium ativo • Indique mais marcas para manter seus benefícios"
+                : "Indique marcas qualificadas e ganhe acesso premium automaticamente"
+              }
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            {hasPremiumAccess 
-              ? "Acesso premium ativo • Indique mais marcas para manter seus benefícios"
-              : "Indique marcas qualificadas e ganhe acesso premium automaticamente"
-            }
-          </p>
-        </div>
 
-        {/* Access Status & Metrics */}
-        <div className="grid gap-6 md:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Status do Acesso
-              </CardTitle>
-              <Crown className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-lg font-bold ${hasPremiumAccess ? 'text-terracotta' : 'text-muted-foreground'}`}>
-                {hasPremiumAccess ? 'Premium' : 'Free'}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {hasPremiumAccess ? 'Acesso completo' : 'Indique para upgrade'}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Convites Enviados
-              </CardTitle>
-              <Gift className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground">
-                1 aceito este mês
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Marcas Conectadas
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1</div>
-              <p className="text-xs text-muted-foreground">
-                Bella Boutique ativa
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Taxa de Conversão
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">33%</div>
-              <p className="text-xs text-muted-foreground">
-                1 de 3 convites aceitos
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Invite System */}
-          <div className="lg:col-span-2">
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Sistema de Convites</CardTitle>
-                <CardDescription>
-                  Gere links personalizados para indicar marcas qualificadas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Gift className="h-4 w-4 text-terracotta" />
-                    <span className="font-semibold text-sm">Como Funciona</span>
-                  </div>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>1. Gere seu link de convite único</li>
-                    <li>2. Envie para marcas que você recomenda</li>
-                    <li>3. Quando elas se cadastram, você ganha acesso premium</li>
-                  </ul>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Seu Link de Convite</label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={inviteLink}
-                      readOnly
-                      className="font-mono text-sm"
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={copyInviteLink}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button onClick={generateNewLink} className="bg-terracotta hover:bg-dark-terracotta">
-                    Gerar Novo Link
-                  </Button>
-                  <Button variant="outline">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Compartilhar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Invitations History */}
+          {/* Access Status & Metrics */}
+          <div className="grid gap-6 md:grid-cols-4 mb-8">
             <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Indicações</CardTitle>
-                <CardDescription>
-                  Acompanhe o status das suas indicações
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Status do Acesso
+                </CardTitle>
+                <Crown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {invitations.map((invite) => (
-                    <div key={invite.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(invite.status)}
-                        <div>
-                          <h4 className="font-semibold">{invite.brandName}</h4>
-                          <p className="text-sm text-muted-foreground">{invite.email}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge className={getStatusColor(invite.status)}>
-                          {invite.status === 'accepted' ? 'Aceito' : 
-                           invite.status === 'pending' ? 'Pendente' : 'Expirado'}
-                        </Badge>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(invite.date).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                <div className={`text-lg font-bold ${hasPremiumAccess ? 'text-terracotta' : 'text-muted-foreground'}`}>
+                  {hasPremiumAccess ? 'Premium' : 'Free'}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {hasPremiumAccess ? 'Acesso completo' : 'Indique para upgrade'}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Convites Enviados
+                </CardTitle>
+                <Gift className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">3</div>
+                <p className="text-xs text-muted-foreground">
+                  1 aceito este mês
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Marcas Conectadas
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">1</div>
+                <p className="text-xs text-muted-foreground">
+                  Bella Boutique ativa
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Taxa de Conversão
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">33%</div>
+                <p className="text-xs text-muted-foreground">
+                  1 de 3 convites aceitos
+                </p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="space-y-6">
-            {/* Premium Benefits */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {hasPremiumAccess ? 'Benefícios Ativos' : 'Benefícios Premium'}
-                </CardTitle>
-                <CardDescription>
-                  {hasPremiumAccess ? 'Você tem acesso a todos os recursos' : 'Indique marcas para desbloquear'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className={`flex items-center gap-3 ${hasPremiumAccess ? '' : 'opacity-60'}`}>
-                  <Crown className={`h-4 w-4 ${hasPremiumAccess ? 'text-terracotta' : 'text-gray-400'}`} />
-                  <span className="text-sm">Scores completos das tendências</span>
-                </div>
-                <div className={`flex items-center gap-3 ${hasPremiumAccess ? '' : 'opacity-60'}`}>
-                  <TrendingUp className={`h-4 w-4 ${hasPremiumAccess ? 'text-terracotta' : 'text-gray-400'}`} />
-                  <span className="text-sm">Ranking prioritário de insights</span>
-                </div>
-                <div className={`flex items-center gap-3 ${hasPremiumAccess ? '' : 'opacity-60'}`}>
-                  <Users className={`h-4 w-4 ${hasPremiumAccess ? 'text-terracotta' : 'text-gray-400'}`} />
-                  <span className="text-sm">Rede exclusiva de estilistas</span>
-                </div>
-                
-                {!hasPremiumAccess && (
-                  <Button className="w-full mt-4 bg-peach hover:bg-peach/80 text-terracotta">
-                    Indicar Primeira Marca
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Invite System */}
+            <div className="lg:col-span-2">
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Sistema de Convites</CardTitle>
+                  <CardDescription>
+                    Gere links personalizados para indicar marcas qualificadas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Gift className="h-4 w-4 text-terracotta" />
+                      <span className="font-semibold text-sm">Como Funciona</span>
+                    </div>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>1. Gere seu link de convite único</li>
+                      <li>2. Envie para marcas que você recomenda</li>
+                      <li>3. Quando elas se cadastram, você ganha acesso premium</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Seu Link de Convite</label>
+                    <div className="flex gap-2">
+                      <Input 
+                        value={inviteLink}
+                        readOnly
+                        className="font-mono text-sm"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={copyInviteLink}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button onClick={generateNewLink} className="bg-terracotta hover:bg-dark-terracotta">
+                      Gerar Novo Link
+                    </Button>
+                    <Button variant="outline">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Compartilhar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Quick Tips */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Dicas de Indicação</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="p-3 bg-accent rounded-lg">
-                  <strong>Marcas Ideais:</strong> E-commerces de moda feminina com 1+ ano de operação
-                </div>
-                <div className="p-3 bg-accent rounded-lg">
-                  <strong>Abordagem:</strong> Destaque os benefícios dos insights baseados em dados
-                </div>
-                <div className="p-3 bg-accent rounded-lg">
-                  <strong>Timing:</strong> Links expiram em 30 dias - acompanhe regularmente
-                </div>
-              </CardContent>
-            </Card>
+              {/* Invitations History */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Histórico de Indicações</CardTitle>
+                  <CardDescription>
+                    Acompanhe o status das suas indicações
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {invitations.map((invite) => (
+                      <div key={invite.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(invite.status)}
+                          <div>
+                            <h4 className="font-semibold">{invite.brandName}</h4>
+                            <p className="text-sm text-muted-foreground">{invite.email}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge className={getStatusColor(invite.status)}>
+                            {invite.status === 'accepted' ? 'Aceito' : 
+                             invite.status === 'pending' ? 'Pendente' : 'Expirado'}
+                          </Badge>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(invite.date).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-6">
+              {/* Premium Benefits */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    {hasPremiumAccess ? 'Benefícios Ativos' : 'Benefícios Premium'}
+                  </CardTitle>
+                  <CardDescription>
+                    {hasPremiumAccess ? 'Você tem acesso a todos os recursos' : 'Indique marcas para desbloquear'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className={`flex items-center gap-3 ${hasPremiumAccess ? '' : 'opacity-60'}`}>
+                    <Crown className={`h-4 w-4 ${hasPremiumAccess ? 'text-terracotta' : 'text-gray-400'}`} />
+                    <span className="text-sm">Scores completos das tendências</span>
+                  </div>
+                  <div className={`flex items-center gap-3 ${hasPremiumAccess ? '' : 'opacity-60'}`}>
+                    <TrendingUp className={`h-4 w-4 ${hasPremiumAccess ? 'text-terracotta' : 'text-gray-400'}`} />
+                    <span className="text-sm">Ranking prioritário de insights</span>
+                  </div>
+                  <div className={`flex items-center gap-3 ${hasPremiumAccess ? '' : 'opacity-60'}`}>
+                    <Users className={`h-4 w-4 ${hasPremiumAccess ? 'text-terracotta' : 'text-gray-400'}`} />
+                    <span className="text-sm">Rede exclusiva de estilistas</span>
+                  </div>
+                  
+                  {!hasPremiumAccess && (
+                    <Button className="w-full mt-4 bg-peach hover:bg-peach/80 text-terracotta">
+                      Indicar Primeira Marca
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Quick Tips */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Dicas de Indicação</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="p-3 bg-accent rounded-lg">
+                    <strong>Marcas Ideais:</strong> E-commerces de moda feminina com 1+ ano de operação
+                  </div>
+                  <div className="p-3 bg-accent rounded-lg">
+                    <strong>Abordagem:</strong> Destaque os benefícios dos insights baseados em dados
+                  </div>
+                  <div className="p-3 bg-accent rounded-lg">
+                    <strong>Timing:</strong> Links expiram em 30 dias - acompanhe regularmente
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
