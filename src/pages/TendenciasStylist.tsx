@@ -105,7 +105,7 @@ const tendenciasStylist = [
   }
 ];
 
-const ITENS_POR_PAGINA = 20;
+const ITENS_POR_PAGINA = 6;
 
 // Função para converter score em classificação
 const getClassificacao = (score: number) => {
@@ -142,9 +142,13 @@ export default function TendenciasStylist() {
   const categorias = ["Todas", ...new Set(tendenciasStylist.map(t => t.categoria))];
 
   const handleDownloadPDF = (tendencia: any) => {
-    // Simular download de PDF
+    // Simular download de PDF - versão corrigida
+    const link = document.createElement('a');
+    link.href = `/pdfs/tendencia-${tendencia.id}.pdf`;
+    link.download = `tendencia-${tendencia.id}.pdf`;
+    link.click();
+    
     console.log(`Baixando PDF para estilista: ${tendencia.titulo}`);
-    // Implementar lógica real de geração de PDF aqui
   };
 
   return (
@@ -255,7 +259,7 @@ export default function TendenciasStylist() {
                         {tendencia.categoria}
                       </Badge>
                       <Badge variant={tendencia.dificuldade === "Avançado" ? "default" : "outline"} 
-                             className={tendencia.dificuldade === "Avançado" ? "bg-terracotta" : ""}>
+                             className={tendencia.dificuldade === "Avançado" ? "bg-terracotta text-white" : ""}>
                         {tendencia.dificuldade}
                       </Badge>
                       <Badge variant="outline" className="bg-blue-100 text-blue-800">
@@ -297,6 +301,9 @@ export default function TendenciasStylist() {
                             );
                           })()}
                         </div>
+                        <div className="text-sm text-muted-foreground">
+                          👁️ {tendencia.visualizacoes} visualizações
+                        </div>
                       </div>
                       
                       <div className="flex space-x-2">
@@ -311,7 +318,7 @@ export default function TendenciasStylist() {
                         <Button 
                           variant="default" 
                           size="sm"
-                          className="bg-terracotta hover:bg-dark-terracotta"
+                          className="bg-terracotta hover:bg-dark-terracotta text-white"
                         >
                           <Users className="h-4 w-4 mr-1" />
                           Ver Detalhes
@@ -343,7 +350,7 @@ export default function TendenciasStylist() {
                 variant={pagina === paginaAtual ? "default" : "outline"}
                 size="sm"
                 onClick={() => setPaginaAtual(pagina)}
-                className={pagina === paginaAtual ? "bg-terracotta" : ""}
+                className={pagina === paginaAtual ? "bg-terracotta text-white" : ""}
               >
                 {pagina}
               </Button>
