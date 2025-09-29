@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Download, Search, Filter, TrendingUp, Users, Star } from "lucide-react";
+import { ChevronRight, Download, Search, Filter, TrendingUp, Users, Star, Palette, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,74 @@ const mockTendencias: Tendencia[] = [
     tags: ["unisex", "inclusão", "diversidade"],
     dataPublicacao: new Date("2024-01-20"),
     conteudoDetalhado: "A moda sem gênero representa uma quebra de paradigmas históricos na indústria fashion. Jovens consumidores, especialmente da Geração Z, estão redefinindo o que significa se vestir, rejeitando categorias binárias tradicionais em favor de uma expressão mais fluida e inclusiva. Esta tendência não apenas reflete mudanças sociais profundas, mas também apresenta oportunidades comerciais significativas para marcas que conseguem criar peças verdadeiramente universais."
+  },
+  {
+    id: 3,
+    titulo: "Tendência da Semana",
+    relevancia: 92,
+    categoria: "Styles",
+    publico: 88,
+    variacao: 15,
+    direcao: "↑",
+    comercial: 85,
+    timing: 90,
+    score: 89,
+    descricao: "Nova análise da tendência da semana",
+    imagem: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&h=400&fit=crop",
+    tags: ["inovação", "tendência", "semana"],
+    dataPublicacao: new Date("2024-01-25"),
+    conteudoDetalhado: "Esta é a tendência da semana com análise detalhada e insights exclusivos para sua marca."
+  },
+  {
+    id: 4,
+    titulo: "Techwear Evolution",
+    relevancia: 87,
+    categoria: "Items",
+    publico: 72,
+    variacao: 8,
+    direcao: "↑",
+    comercial: 79,
+    timing: 85,
+    score: 81,
+    descricao: "Tecnologia e moda se fundem em peças funcionais",
+    imagem: "/placeholder.svg",
+    tags: ["tecnologia", "funcional", "urban"],
+    dataPublicacao: new Date("2024-01-18"),
+    conteudoDetalhado: "O techwear continua evoluindo, combinando alta tecnologia com design fashion para criar peças que são tanto funcionais quanto esteticamente impressionantes."
+  },
+  {
+    id: 5,
+    titulo: "Vintage Revival",
+    relevancia: 85,
+    categoria: "Styles",
+    publico: 81,
+    variacao: 10,
+    direcao: "↑",
+    comercial: 83,
+    timing: 87,
+    score: 84,
+    descricao: "Retorno das peças vintage com toque contemporâneo",
+    imagem: "/placeholder.svg",
+    tags: ["vintage", "retrô", "sustentabilidade"],
+    dataPublicacao: new Date("2024-01-22"),
+    conteudoDetalhado: "O movimento vintage ganha nova vida com reinterpretações modernas que mantêm a autenticidade das peças originais enquanto as atualizam para o consumidor contemporâneo."
+  },
+  {
+    id: 6,
+    titulo: "NOVA TENDÊNCIA - Semana 1",
+    relevancia: 95,
+    categoria: "Styles",
+    publico: 90,
+    variacao: 20,
+    direcao: "↑",
+    comercial: 88,
+    timing: 92,
+    score: 91,
+    descricao: "Descrição atualizada da nova tendência",
+    imagem: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&h=400&fit=crop",
+    tags: ["nova", "tendência", "exclusiva"],
+    dataPublicacao: new Date("2024-01-27"),
+    conteudoDetalhado: "Esta é uma nova tendência exclusiva com alto potencial de crescimento e aplicação prática para estilistas e marcas."
   }
 ];
 
@@ -92,9 +160,9 @@ export default function TodasTendencias() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 85) return 'text-success-green';
-    if (score >= 70) return 'text-warning-amber';
-    return 'text-attention-coral';
+    if (score >= 85) return 'text-green-600';
+    if (score >= 70) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   return (
@@ -195,7 +263,7 @@ export default function TodasTendencias() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <span className={`font-semibold ${trend.direcao === '↑' ? 'text-success-green' : 'text-attention-coral'}`}>
+                    <span className={`font-semibold ${trend.direcao === '↑' ? 'text-green-600' : 'text-red-600'}`}>
                       {trend.direcao} {trend.variacao}%
                     </span>
                   </div>
