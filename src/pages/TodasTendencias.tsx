@@ -132,28 +132,28 @@ const mockTendencias: Tendencia[] = [
   }
 ];
 
-const handleDownloadPDF = (tendencia: any) => {
-  // Para PDF na pasta public do projeto
-  const pdfUrl = `${window.location.origin}/tendencia.pdf`;
-  
-  // Criar link temporário para download
-  const link = document.createElement('a');
-  link.href = pdfUrl;
-  link.download = `tendencia-${tendencia.id}-${tendencia.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
-  
-  // Disparar o download
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  console.log(`Baixando PDF: ${tendencia.titulo}`);
-};
-
 export default function TodasTendencias() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedTrend, setSelectedTrend] = useState<Tendencia | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleDownloadPDF = (tendencia: Tendencia) => {
+    // Para PDF na pasta public do projeto
+    const pdfUrl = `${window.location.origin}/tendencia.pdf`;
+    
+    // Criar link temporário para download
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `tendencia-${tendencia.id}-${tendencia.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+    
+    // Disparar o download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log(`Baixando PDF: ${tendencia.titulo}`);
+  };
 
   const filteredTrends = mockTendencias.filter((trend) => {
     const matchesSearch = trend.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -296,6 +296,22 @@ export default function TodasTendencias() {
                       +{trend.tags.length - 3}
                     </Badge>
                   )}
+                </div>
+                
+                {/* Botão de Download */}
+                <div className="mt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Impede que o clique no botão abra o modal
+                      handleDownloadPDF(trend);
+                    }}
+                    className="w-full"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar Relatório
+                  </Button>
                 </div>
               </CardContent>
             </Card>
