@@ -55,7 +55,7 @@ export function TendenciaDetalheModal({
     return 'text-attention-coral';
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = (tendencia: any) => {
     const element = document.getElementById('trend-content');
     const opt = {
       margin: 1,
@@ -67,6 +67,12 @@ export function TendenciaDetalheModal({
 
     html2pdf().set(opt).from(element).save();
   };
+        // Para PDF na pasta public do projeto
+      const pdfUrl = `${window.location.origin}/tendencia.pdf`;
+
+    const link = document.createElement('a');
+  link.href = pdfUrl;
+  link.download = `tendencia-${tendencia.id}-${tendencia.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -85,6 +91,12 @@ export function TendenciaDetalheModal({
       // Aqui você pode adicionar um toast de confirmação
     }
   };
+
+    document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  console.log(`Baixando PDF: ${tendencia.titulo}`);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
