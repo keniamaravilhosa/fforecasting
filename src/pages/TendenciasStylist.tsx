@@ -18,7 +18,8 @@ import {
   TrendingUp,
   Sparkles,
   BarChart3,
-  DollarSign
+  DollarSign,
+  Palette
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -89,7 +90,19 @@ const tendenciasStylist = [
     visualizacoes: 723,
     tags: ["tecnologia", "wearables", "circuitos", "inovação"]
   },
-  // Adicione mais 15 tendências específicas para estilistas...
+  {
+    id: 6,
+    titulo: "NOVA TENDÊNCIA - Semana 1",
+    descricao: "Descrição atualizada...",
+    imagem: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&h=400&fit=crop",
+    categoria: "Inovação",
+    dificuldade: "Intermediário",
+    tempoLeitura: "10 min",
+    score: 88,
+    dataPublicacao: "2024-12-10",
+    visualizacoes: 543,
+    tags: ["inovação", "tendência", "semana"]
+  }
 ];
 
 const ITENS_POR_PAGINA = 20;
