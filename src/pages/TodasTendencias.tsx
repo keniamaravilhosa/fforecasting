@@ -132,6 +132,23 @@ const mockTendencias: Tendencia[] = [
   }
 ];
 
+const handleDownloadPDF = (tendencia: any) => {
+  // Para PDF na pasta public do projeto
+  const pdfUrl = `${window.location.origin}/tendencia.pdf`;
+  
+  // Criar link temporário para download
+  const link = document.createElement('a');
+  link.href = pdfUrl;
+  link.download = `tendencia-${tendencia.id}-${tendencia.titulo.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+  
+  // Disparar o download
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  console.log(`Baixando PDF: ${tendencia.titulo}`);
+};
+
 export default function TodasTendencias() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
