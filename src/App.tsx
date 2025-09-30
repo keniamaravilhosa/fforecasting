@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
 import Auth from "./pages/Auth";
+import Invite from "./pages/Invite";
 import TodasTendencias from "./pages/TodasTendencias";
 import TendenciasStylist from "./pages/TendenciasStylist";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/invite/:code" element={<Invite />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/todas-tendencias" element={<TodasTendencias />} />
             <Route path="/tendencias-stylist" element={<TendenciasStylist />} />

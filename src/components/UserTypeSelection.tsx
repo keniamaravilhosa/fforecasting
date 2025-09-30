@@ -13,139 +13,85 @@ import {
 } from "lucide-react";
 
 interface UserTypeSelectionProps {
-  onSelectType: (type: 'brand' | 'stylist') => void;
+  onSelectType: (type: 'stylist') => void;
 }
 
 const UserTypeSelection = ({ onSelectType }: UserTypeSelectionProps) => {
   return (
-    <section className="py-20">
-      <div className="container px-4 md:px-6 max-w-4xl mx-auto">
-        <div className="text-center space-y-4 mb-12">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Escolha seu <span className="text-terracotta">Perfil</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-[600px] mx-auto">
-            Selecione como você deseja usar o FForecasting para uma experiência personalizada
+    <div className="py-12 bg-gradient-to-b from-peach/10 to-background">
+      <div className="container px-4 md:px-6">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">Bem-vindo à FForecasting</h1>
+          <p className="text-xl text-muted-foreground">
+            Complete seu cadastro como estilista
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Marca Card */}
-          <Card className="relative overflow-hidden border-2 hover:border-terracotta/50 transition-all duration-300 cursor-pointer group">
+        <div className="max-w-2xl mx-auto">
+          {/* Stylist Card */}
+          <Card className="relative overflow-hidden hover:shadow-xl transition-shadow border-2 border-terracotta">
             <div className="absolute top-4 right-4">
-              <Badge className="bg-terracotta text-white">Recomendado</Badge>
-            </div>
-            
-            <CardHeader className="text-center pb-6">
-              <div className="mx-auto p-4 bg-accent rounded-full w-fit mb-4 group-hover:bg-peach/30 transition-colors">
-                <Store className="h-8 w-8 text-terracotta" />
-              </div>
-              <CardTitle className="text-2xl">Sou uma Marca</CardTitle>
-              <CardDescription className="text-base">
-                Marcas de moda feminina que buscam insights estratégicos baseados em dados
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Check className="h-4 w-4 text-terracotta flex-shrink-0" />
-                  <span className="text-sm">Ranking personalizado de tendências</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="h-4 w-4 text-terracotta flex-shrink-0" />
-                  <span className="text-sm">Scores baseados no seu público-alvo</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="h-4 w-4 text-terracotta flex-shrink-0" />
-                  <span className="text-sm">Dashboard com métricas detalhadas</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="h-4 w-4 text-terracotta flex-shrink-0" />
-                  <span className="text-sm">Questionário de diagnóstico</span>
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full bg-terracotta hover:bg-dark-terracotta text-white"
-                onClick={() => onSelectType('brand')}
-              >
-                Continuar como Marca
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">
-                  Acesso completo • Sem compromisso inicial
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Estilista Card */}
-          <Card className="relative overflow-hidden border-2 hover:border-peach/50 transition-all duration-300 cursor-pointer group">
-            <div className="absolute top-4 right-4">
-              <Badge variant="secondary" className="bg-peach/20 text-dark-terracotta">
+              <Badge className="bg-peach text-terracotta">
                 <Crown className="h-3 w-3 mr-1" />
                 Premium
               </Badge>
             </div>
-            
-            <CardHeader className="text-center pb-6">
-              <div className="mx-auto p-4 bg-peach/20 rounded-full w-fit mb-4 group-hover:bg-peach/40 transition-colors">
-                <Palette className="h-8 w-8 text-terracotta" />
-              </div>
-              <CardTitle className="text-2xl">Sou Estilista</CardTitle>
-              <CardDescription className="text-base">
-                Profissionais de moda que desejam indicar marcas e acessar conteúdo premium
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-terracotta" />
+                Estilista
+              </CardTitle>
+              <CardDescription>
+                Acesse insights exclusivos e indique marcas para ganhar benefícios
               </CardDescription>
             </CardHeader>
-            
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Gift className="h-4 w-4 text-secondary flex-shrink-0" />
-                  <span className="text-sm">Gerar links de convite únicos</span>
+                <div className="flex items-start gap-3">
+                  <Gift className="h-5 w-5 text-terracotta mt-0.5" />
+                  <div>
+                    <p className="font-medium">Sistema de Indicações</p>
+                    <p className="text-sm text-muted-foreground">Ganhe acesso premium indicando marcas qualificadas</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="h-4 w-4 text-secondary flex-shrink-0" />
-                  <span className="text-sm">Acesso premium ao indicar marcas</span>
+                <div className="flex items-start gap-3">
+                  <TrendingUp className="h-5 w-5 text-terracotta mt-0.5" />
+                  <div>
+                    <p className="font-medium">Tendências Exclusivas</p>
+                    <p className="text-sm text-muted-foreground">Análises profundas do mercado de moda</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Users className="h-4 w-4 text-secondary flex-shrink-0" />
-                  <span className="text-sm">Rede exclusiva de profissionais</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Crown className="h-4 w-4 text-secondary flex-shrink-0" />
-                  <span className="text-sm">Scores completos das tendências</span>
+                <div className="flex items-start gap-3">
+                  <Users className="h-5 w-5 text-terracotta mt-0.5" />
+                  <div>
+                    <p className="font-medium">Rede de Profissionais</p>
+                    <p className="text-sm text-muted-foreground">Conecte-se com outros estilistas e marcas</p>
+                  </div>
                 </div>
               </div>
-              
               <Button 
-                variant="outline"
-                className="w-full border-peach hover:bg-peach/10 text-terracotta"
+                className="w-full bg-terracotta hover:bg-dark-terracotta text-white"
                 onClick={() => onSelectType('stylist')}
+                size="lg"
               >
                 Continuar como Estilista
-                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">
-                  Gratuito • Ganhe acesso premium indicando
-                </p>
-              </div>
             </CardContent>
           </Card>
-        </div>
-        
-        <div className="text-center mt-8">
-          <p className="text-sm text-muted-foreground">
-            Não tem certeza? Você pode alterar seu tipo de conta depois.
-          </p>
+
+          {/* Info para Marcas */}
+          <div className="mt-8 p-6 bg-accent/50 rounded-lg text-center">
+            <h3 className="font-semibold mb-2">Você é uma marca?</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              O acesso para marcas é exclusivo por convite. Entre em contato com um estilista parceiro para receber seu link de cadastro.
+            </p>
+            <Badge variant="outline" className="text-xs">
+              Acesso Restrito
+            </Badge>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

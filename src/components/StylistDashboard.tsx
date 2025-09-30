@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TrendsCarousel } from "@/components/ui/trendscarousel";
+import InviteBrandForm from "@/components/InviteBrandForm";
+import { useStylistInvites } from "@/hooks/useStylistInvites";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Gift, 
   Users, 
@@ -27,15 +31,33 @@ interface StylistDashboardProps {
 
 const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
   const { toast } = useToast();
-  const [inviteLink] = useState("https://fforecasting.com/invite/FFORECAST-ABC123");
+  const { profile } = useProfile();
+  const [stylistId, setStylistId] = useState<string | null>(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [showInviteForm, setShowInviteForm] = useState(false);
   
-  // Mock data - Invitations
-  const invitations = [
-    { id: 1, brandName: "Bella Boutique", email: "contato@bella.com", status: "accepted", date: "2024-01-15" },
-    { id: 2, brandName: "Style Maven", email: "hello@stylemaven.com", status: "pending", date: "2024-01-10" },
-    { id: 3, brandName: "Chic Closet", email: "info@chiccloset.com", status: "expired", date: "2024-01-05" }
-  ];
+  const { invites, loading: invitesLoading, refreshInvites } = useStylistInvites(stylistId);
+
+  // Buscar ID do estilista baseado no profile
+  useEffect(() => {
+    const fetchStylistId = async () => {
+      if (!profile?.id) return;
+
+      const { data, error } = await supabase
+        .from('stylists')
+        .select('id')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching stylist:', error);
+      } else if (data) {
+        setStylistId(data.id);
+      }
+    };
+
+    fetchStylistId();
+  }, [profile]);
 
   // Trends Data - CORRIGIDO: fora da função getStatusColor
   const trendsData = [
@@ -77,20 +99,22 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
     }
   ];
 
-  const copyInviteLink = () => {
-    navigator.clipboard.writeText(inviteLink);
+  const copyInviteLink = (inviteCode: string) => {
+    const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
+    navigator.clipboard.writeText(inviteUrl);
     toast({
       title: "Link copiado!",
       description: "O link de convite foi copiado para sua área de transferência.",
     });
   };
 
-  const generateNewLink = () => {
-    toast({
-      title: "Novo link gerado!",
-      description: "Um novo link de convite foi criado com sucesso.",
-    });
+  const handleInviteSent = () => {
+    setShowInviteForm(false);
+    refreshInvites();
   };
+
+  const acceptedInvites = invites.filter(inv => inv.status === 'accepted').length;
+  const pendingInvites = invites.filter(inv => inv.status === 'pending').length;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -138,38 +162,16 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                 <span className="font-semibold text-sm">Como Funciona</span>
               </div>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>1. Gere seu link de convite único</li>
-                <li>2. Envie para marcas que você recomenda</li>
+                <li>1. Crie convites para marcas informando nome e email</li>
+                <li>2. Compartilhe o link de convite gerado</li>
                 <li>3. Quando elas se cadastram, você ganha acesso premium</li>
               </ul>
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Seu Link de Convite</label>
-              <div className="flex gap-2">
-                <Input 
-                  value={inviteLink}
-                  readOnly
-                  className="font-mono text-sm"
-                />
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={copyInviteLink}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button onClick={generateNewLink} className="bg-terracotta hover:bg-dark-terracotta">
-                Gerar Novo Link
-              </Button>
-              <Button variant="outline">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Compartilhar
-              </Button>
+            <div className="p-4 bg-accent rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                Convites expiram em 30 dias. Acompanhe o status de cada convite no seu dashboard.
+              </p>
             </div>
           </div>
           
@@ -232,9 +234,9 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                 <Gift className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">3</div>
+                <div className="text-2xl font-bold">{invites.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  1 aceito este mês
+                  {acceptedInvites} aceito{acceptedInvites !== 1 ? 's' : ''} • {pendingInvites} pendente{pendingInvites !== 1 ? 's' : ''}
                 </p>
               </CardContent>
             </Card>
@@ -247,9 +249,9 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">1</div>
+                <div className="text-2xl font-bold">{acceptedInvites}</div>
                 <p className="text-xs text-muted-foreground">
-                  Bella Boutique ativa
+                  {acceptedInvites > 0 ? `${acceptedInvites} marca${acceptedInvites !== 1 ? 's' : ''} conectada${acceptedInvites !== 1 ? 's' : ''}` : 'Nenhuma marca ainda'}
                 </p>
               </CardContent>
             </Card>
@@ -262,9 +264,11 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">33%</div>
+                <div className="text-2xl font-bold">
+                  {invites.length > 0 ? Math.round((acceptedInvites / invites.length) * 100) : 0}%
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  1 de 3 convites aceitos
+                  {acceptedInvites} de {invites.length} convites aceitos
                 </p>
               </CardContent>
             </Card>
@@ -278,55 +282,52 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Invite System */}
             <div className="lg:col-span-2">
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Sistema de Convites</CardTitle>
-                  <CardDescription>
-                    Gere links personalizados para indicar marcas qualificadas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Gift className="h-4 w-4 text-terracotta" />
-                      <span className="font-semibold text-sm">Como Funciona</span>
+              {showInviteForm ? (
+                <div className="mb-6">
+                  <InviteBrandForm 
+                    stylistId={stylistId || ''} 
+                    onInviteSent={handleInviteSent}
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowInviteForm(false)}
+                    className="w-full mt-4"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              ) : (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle>Sistema de Convites</CardTitle>
+                    <CardDescription>
+                      Convide marcas qualificadas para se cadastrarem na plataforma
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Gift className="h-4 w-4 text-terracotta" />
+                        <span className="font-semibold text-sm">Como Funciona</span>
+                      </div>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>1. Crie um convite informando nome e email da marca</li>
+                        <li>2. Compartilhe o link de convite gerado com a marca</li>
+                        <li>3. Quando ela se cadastra, você ganha acesso premium</li>
+                      </ul>
                     </div>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>1. Gere seu link de convite único</li>
-                      <li>2. Envie para marcas que você recomenda</li>
-                      <li>3. Quando elas se cadastram, você ganha acesso premium</li>
-                    </ul>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Seu Link de Convite</label>
-                    <div className="flex gap-2">
-                      <Input 
-                        value={inviteLink}
-                        readOnly
-                        className="font-mono text-sm"
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        onClick={copyInviteLink}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button onClick={generateNewLink} className="bg-terracotta hover:bg-dark-terracotta">
-                      Gerar Novo Link
+                    
+                    <Button 
+                      onClick={() => setShowInviteForm(true)} 
+                      className="w-full bg-terracotta hover:bg-dark-terracotta"
+                      disabled={!stylistId}
+                    >
+                      <Gift className="h-4 w-4 mr-2" />
+                      Convidar Nova Marca
                     </Button>
-                    <Button variant="outline">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Compartilhar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Invitations History */}
               <Card>
@@ -337,28 +338,50 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {invitations.map((invite) => (
-                      <div key={invite.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          {getStatusIcon(invite.status)}
-                          <div>
-                            <h4 className="font-semibold">{invite.brandName}</h4>
-                            <p className="text-sm text-muted-foreground">{invite.email}</p>
+                  {invitesLoading ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Carregando convites...
+                    </div>
+                  ) : invites.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Você ainda não enviou nenhum convite. Comece convidando sua primeira marca!
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {invites.map((invite) => (
+                        <div key={invite.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div className="flex items-center gap-3 flex-1">
+                            {getStatusIcon(invite.status)}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold truncate">{invite.brand_name}</h4>
+                              <p className="text-sm text-muted-foreground truncate">{invite.brand_email}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {invite.status === 'pending' && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => copyInviteLink(invite.invite_code)}
+                                title="Copiar link"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <div className="text-right">
+                              <Badge className={getStatusColor(invite.status)}>
+                                {invite.status === 'accepted' ? 'Aceito' : 
+                                 invite.status === 'pending' ? 'Pendente' : 'Expirado'}
+                              </Badge>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(invite.created_at).toLocaleDateString('pt-BR')}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <Badge className={getStatusColor(invite.status)}>
-                            {invite.status === 'accepted' ? 'Aceito' : 
-                             invite.status === 'pending' ? 'Pendente' : 'Expirado'}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(invite.date).toLocaleDateString('pt-BR')}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

@@ -26,9 +26,11 @@ type BrandFormData = z.infer<typeof brandSchema>;
 
 interface BrandRegistrationProps {
   onBack: () => void;
+  inviteCode?: string;
+  inviteData?: any;
 }
 
-const BrandRegistration = ({ onBack }: BrandRegistrationProps) => {
+const BrandRegistration = ({ onBack, inviteCode, inviteData }: BrandRegistrationProps) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +55,14 @@ const BrandRegistration = ({ onBack }: BrandRegistrationProps) => {
     setLoading(true);
     
     try {
+      // Verificar se tem convite válido (se veio de /invite)
+      if (inviteCode && inviteData) {
+        // Verificar se o email do usuário corresponde ao email do convite
+        if (user.email !== inviteData.brand_email) {
+          throw new Error("Email não corresponde ao convite. Use o email: " + inviteData.brand_email);
+        }
+      }
+
       // Create profile first
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -80,6 +90,21 @@ const BrandRegistration = ({ onBack }: BrandRegistrationProps) => {
         });
 
       if (brandError) throw brandError;
+
+      // Se tiver convite, atualizar status para 'accepted'
+      if (inviteCode) {
+        const { error: updateError } = await supabase
+          .from('brand_invites')
+          .update({ 
+            status: 'accepted',
+            brand_id: profile.id
+          })
+          .eq('invite_code', inviteCode);
+
+        if (updateError) {
+          console.error("Erro ao atualizar convite:", updateError);
+        }
+      }
 
       toast.success("Cadastro realizado com sucesso!");
       navigate("/dashboard");
