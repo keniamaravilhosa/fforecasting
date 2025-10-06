@@ -22,6 +22,7 @@ import {
   Palette
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { TendenciaDetalheModal } from "@/components/TendenciaDetalheModal";
 
 // Mock data - Tendências ESPECÍFICAS para estilistas
 const tendenciasStylist = [
@@ -36,7 +37,14 @@ const tendenciasStylist = [
     score: 92,
     dataPublicacao: "2024-12-15",
     visualizacoes: 1247,
-    tags: ["padrões", "tecidos", "paleta-cores", "luxo"]
+    tags: ["padrões", "tecidos", "paleta-cores", "luxo"],
+    relevancia: 92,
+    publico: 85,
+    variacao: 12,
+    direcao: '↑' as const,
+    comercial: 78,
+    timing: 88,
+    conteudoDetalhado: `Este guia completo para estilistas explora como adaptar o movimento cottagecore para marcas de luxo.\n\n**Padrões de Corte:**\nO cottagecore premium exige uma abordagem refinada aos cortes tradicionais. Explore silhuetas amplas mas estruturadas, com ênfase em costura impecável e acabamentos de alta qualidade.\n\n**Tecidos Recomendados:**\n- Linho irlandês de alta gramatura\n- Algodão pima orgânico\n- Lã merino extrafina\n- Seda crepe artesanal\n\n**Paleta de Cores:**\nTrabalhe com tons naturais sofisticados: bege creme, verde musgo profundo, terracota suave e azul petróleo. Evite cores vibrantes que comprometam a estética atemporal.\n\n**Detalhes Técnicos:**\nIncorpore bordados à mão, botões de madrepérola genuína e rendas artesanais. A chave é equilibrar o rústico com o refinado.`
   },
   {
     id: 2,
@@ -49,7 +57,14 @@ const tendenciasStylist = [
     score: 78,
     dataPublicacao: "2024-12-14",
     visualizacoes: 987,
-    tags: ["modelagem", "silhuetas", "unissex", "tutorial"]
+    tags: ["modelagem", "silhuetas", "unissex", "tutorial"],
+    relevancia: 78,
+    publico: 92,
+    variacao: 18,
+    direcao: '↑' as const,
+    comercial: 65,
+    timing: 85,
+    conteudoDetalhado: `Workshop prático para criação de peças verdadeiramente inclusivas e sem gênero.\n\n**Análise de Silhuetas:**\nFoco em cortes oversized e estruturados que favorecem diversos biotipos sem depender de marcações de cintura ou quadril tradicionais.\n\n**Caimentos:**\nTrabalhe com caimentos retos e amplos, explorando volumes estratégicos que não sigam padrões binários de gênero.\n\n**Técnicas de Modelagem:**\n- Ombros estruturados mas confortáveis\n- Comprimentos versáteis\n- Sistemas de ajuste discretos\n- Fechamentos práticos e neutros\n\n**Materiais:**\nPriorize tecidos com boa recuperação e conforto, como malhas estruturadas e algodões com elastano.`
   },
   {
     id: 3,
@@ -62,7 +77,14 @@ const tendenciasStylist = [
     score: 65,
     dataPublicacao: "2024-12-13",
     visualizacoes: 856,
-    tags: ["tecidos", "sustentabilidade", "fornecedores", "materiais"]
+    tags: ["tecidos", "sustentabilidade", "fornecedores", "materiais"],
+    relevancia: 65,
+    publico: 78,
+    variacao: 25,
+    direcao: '↑' as const,
+    comercial: 88,
+    timing: 92,
+    conteudoDetalhado: `Catálogo atualizado dos melhores materiais sustentáveis disponíveis no mercado.\n\n**Tecidos Eco-Friendly:**\n- Tencel™ Lyocell: Excelente caimento, produção sustentável\n- Linho orgânico: Durabilidade e baixo impacto ambiental\n- Algodão reciclado: Custo-benefício e versatilidade\n- Fibras de bambu: Maciez e propriedades antibacterianas\n\n**Análise de Custo-Benefício:**\nEmbora inicialmente mais caros, tecidos sustentáveis oferecem melhor durabilidade e apelo de marca.\n\n**Fornecedores Recomendados:**\nLista completa disponível no material completo com contatos diretos e volumes mínimos de pedido.`
   },
   {
     id: 4,
@@ -75,7 +97,14 @@ const tendenciasStylist = [
     score: 120,
     dataPublicacao: "2024-12-12",
     visualizacoes: 1543,
-    tags: ["y2k", "detalhes", "acessórios", "moderno"]
+    tags: ["y2k", "detalhes", "acessórios", "moderno"],
+    relevancia: 120,
+    publico: 95,
+    variacao: 32,
+    direcao: '↑' as const,
+    comercial: 110,
+    timing: 98,
+    conteudoDetalhado: `Masterclass completa sobre como resgatar elementos Y2K com sofisticação contemporânea.\n\n**Elementos-Chave:**\n- Low-rise atualizado (mais confortável)\n- Metalizados estratégicos\n- Transparências modernas\n- Logos minimalistas\n\n**Detalhes que Funcionam:**\nFoco em acabamentos metálicos, zíperes expostos e recortes geométricos sem exageros.\n\n**Acessórios:**\nÓculos pequenos, bolsas micro estruturadas e joias chunky em versões atualizadas.\n\n**Armadilhas a Evitar:**\nNão caia no excesso de referências nostálgicas. O segredo é a edição cuidadosa de elementos icônicos.`
   },
   {
     id: 5,
@@ -88,7 +117,14 @@ const tendenciasStylist = [
     score: 45,
     dataPublicacao: "2024-12-11",
     visualizacoes: 723,
-    tags: ["tecnologia", "wearables", "circuitos", "inovação"]
+    tags: ["tecnologia", "wearables", "circuitos", "inovação"],
+    relevancia: 45,
+    publico: 38,
+    variacao: 8,
+    direcao: '↑' as const,
+    comercial: 42,
+    timing: 55,
+    conteudoDetalhado: `Guia técnico de introdução à moda tecnológica para estilistas visionários.\n\n**Circuitos Integrados:**\nAprenda a incorporar LEDs, sensores de temperatura e elementos condutivos em tecidos.\n\n**Sensores:**\n- Movimento e postura\n- Temperatura corporal\n- Frequência cardíaca\n\n**Materiais Inteligentes:**\nTecidos que mudam de cor, fibras condutivas e têxteis com memória de forma.\n\n**Fornecedores:**\nEmpresas especializadas em componentes miniaturizados e laváveis para moda.\n\n**Considerações Práticas:**\nDurabilidade, manutenção e conforto são fundamentais para aceitação do consumidor.`
   },
   {
     id: 6,
@@ -101,7 +137,14 @@ const tendenciasStylist = [
     score: 88,
     dataPublicacao: "2024-12-10",
     visualizacoes: 543,
-    tags: ["inovação", "tendência", "semana"]
+    tags: ["inovação", "tendência", "semana"],
+    relevancia: 88,
+    publico: 82,
+    variacao: 15,
+    direcao: '↑' as const,
+    comercial: 75,
+    timing: 90,
+    conteudoDetalhado: `Análise das tendências emergentes desta semana no mercado de moda.\n\n**Destaques:**\nMovimentos identificados nas principais passarelas e redes sociais.\n\n**Aplicação Prática:**\nComo adaptar essas tendências para diferentes segmentos de mercado.\n\n**Previsão:**\nEstimativa de durabilidade e potencial comercial de cada tendência identificada.`
   }
 ];
 
@@ -118,6 +161,8 @@ export default function TendenciasStylist() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [termoBusca, setTermoBusca] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState("Todas");
+  const [tendenciaSelecionada, setTendenciaSelecionada] = useState<typeof tendenciasStylist[0] | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Filtrar tendências
   const tendenciasFiltradas = tendenciasStylist.filter(tendencia =>
@@ -149,6 +194,25 @@ export default function TendenciasStylist() {
     link.click();
     
     console.log(`Baixando PDF para estilista: ${tendencia.titulo}`);
+  };
+
+  const handleVerDetalhes = (tendencia: typeof tendenciasStylist[0]) => {
+    setTendenciaSelecionada(tendencia);
+    setModalOpen(true);
+  };
+
+  const handleNextTendencia = () => {
+    if (!tendenciaSelecionada) return;
+    const currentIndex = tendenciasPagina.findIndex(t => t.id === tendenciaSelecionada.id);
+    const nextIndex = (currentIndex + 1) % tendenciasPagina.length;
+    setTendenciaSelecionada(tendenciasPagina[nextIndex]);
+  };
+
+  const handlePreviousTendencia = () => {
+    if (!tendenciaSelecionada) return;
+    const currentIndex = tendenciasPagina.findIndex(t => t.id === tendenciaSelecionada.id);
+    const previousIndex = currentIndex === 0 ? tendenciasPagina.length - 1 : currentIndex - 1;
+    setTendenciaSelecionada(tendenciasPagina[previousIndex]);
   };
 
   return (
@@ -319,6 +383,7 @@ export default function TendenciasStylist() {
                           variant="default" 
                           size="sm"
                           className="bg-terracotta hover:bg-dark-terracotta text-white"
+                          onClick={() => handleVerDetalhes(tendencia)}
                         >
                           <Users className="h-4 w-4 mr-1" />
                           Ver Detalhes
@@ -373,6 +438,21 @@ export default function TendenciasStylist() {
               Nenhum workshop encontrado para "{termoBusca}"
             </p>
           </div>
+        )}
+
+        {/* Modal de Detalhes */}
+        {tendenciaSelecionada && (
+          <TendenciaDetalheModal
+            tendencia={{
+              ...tendenciaSelecionada,
+              categoria: 'Styles' as const,
+              dataPublicacao: new Date(tendenciaSelecionada.dataPublicacao)
+            }}
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onNext={handleNextTendencia}
+            onPrevious={handlePreviousTendencia}
+          />
         )}
       </div>
     </div>
