@@ -48,6 +48,8 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
     setLoading(true);
     try {
       const inviteCode = generateInviteCode();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // Convite expira em 30 dias
       
       // Inserir convite na tabela brand_invites
       const { error: insertError } = await supabase
@@ -56,8 +58,9 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
           stylist_id: stylistId,
           brand_name: data.brandName,
           brand_email: data.brandEmail,
-          invite_code: inviteCode,
+          invite_code: inviteCode, // Incluir o invite_code gerado
           status: 'pending',
+          expires_at: expiresAt.toISOString(), // Incluir a data de expiração
         });
 
       if (insertError) {
@@ -66,8 +69,11 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
 
       toast({
         title: "Convite enviado!",
-        description: `Um convite foi criado para ${data.brandName}. Compartilhe o link de convite com a marca.`,
+        description: `Um convite foi criado para ${data.brandName}. Compartilhe o link de convite com a marca: ${window.location.origin}/invite/${inviteCode}`,
       });
+
+      // Exibir o link de convite para o estilista
+      alert(`Convite criado com sucesso! Compartilhe este link com a marca: ${window.location.origin}/invite/${inviteCode}`);
 
       reset();
       onInviteSent?.();
