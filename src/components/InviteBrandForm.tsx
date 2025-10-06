@@ -148,3 +148,4 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
 };
 
 export default InviteBrandForm;
+
