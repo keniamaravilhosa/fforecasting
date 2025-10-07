@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
 
   const form = useForm<AuthFormData>({
@@ -33,10 +35,14 @@ const Auth = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
+    if (user && !profileLoading) {
+      if (profile) {
+        navigate("/dashboard");
+      } else {
+        navigate("/register");
+      }
     }
-  }, [user, navigate]);
+  }, [user, profile, profileLoading, navigate]);
 
   const onSubmit = async (data: AuthFormData) => {
     setLoading(true);
@@ -60,7 +66,7 @@ const Auth = () => {
       } else {
         if (isLogin) {
           toast.success("Login realizado com sucesso!");
-          navigate("/dashboard");
+          // O redirecionamento será feito pelo useEffect após verificar o perfil
         } else {
           toast.success("Cadastro realizado! Verifique seu email para confirmar a conta.");
         }
