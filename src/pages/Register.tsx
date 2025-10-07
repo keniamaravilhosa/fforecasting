@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const Register = () => {
-  const [selectedType, setSelectedType] = useState<'stylist' | null>(null);
+  const [selectedType, setSelectedType] = useState<'stylist' | 'brand' | null>(null);
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const Register = () => {
     }
   }, [user, profile, profileLoading, navigate]);
 
-  const handleSelectType = (type: 'stylist') => {
+  const handleSelectType = (type: 'stylist' | 'brand') => {
     setSelectedType(type);
   };
 
@@ -36,6 +36,10 @@ const Register = () => {
 
     if (selectedType === 'stylist') {
       return <StylistRegistration onBack={() => setSelectedType(null)} />;
+    }
+
+    if (selectedType === 'brand') {
+      return <BrandRegistration onBack={() => setSelectedType(null)} />;
     }
 
     return null;
