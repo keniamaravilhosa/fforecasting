@@ -26,16 +26,23 @@ const Invite = () => {
       }
 
       try {
-        // Buscar convite na tabela brand_invites
+        // Buscar convite na tabela brand_invites - REMOVIDO o filtro por status
         const { data, error: fetchError } = await supabase
           .from('brand_invites')
           .select('*')
           .eq('invite_code', code)
-          .eq('status', 'pending')
+          // .eq('status', 'pending') // REMOVIDO - busca qualquer status
           .single();
 
         if (fetchError || !data) {
-          setError("Convite não encontrado ou já foi utilizado");
+          setError("Convite não encontrado");
+          setValidating(false);
+          return;
+        }
+
+        // Verificar se já foi utilizado
+        if (data.status === 'used' || data.status === 'redeemed') {
+          setError("Este convite já foi utilizado");
           setValidating(false);
           return;
         }
@@ -44,6 +51,13 @@ const Invite = () => {
         const expiresAt = new Date(data.expires_at);
         if (expiresAt < new Date()) {
           setError("Este convite expirou. Solicite um novo convite ao estilista.");
+          setValidating(false);
+          return;
+        }
+
+        // Verificar se está em status válido (pending ou active)
+        if (data.status !== 'pending' && data.status !== 'active') {
+          setError("Este convite não está mais válido");
           setValidating(false);
           return;
         }
@@ -61,6 +75,29 @@ const Invite = () => {
     validateInvite();
   }, [code]);
 
+  // Função para atualizar o status do convite quando for utilizado
+  const updateInviteStatus = async (newStatus: 'used' | 'redeemed' = 'used') => {
+    if (!code) return;
+
+    try {
+      const { error } = await supabase
+        .from('brand_invites')
+        .update({ 
+          status: newStatus,
+          used_at: new Date().toISOString()
+        })
+        .eq('invite_code', code);
+
+      if (error) {
+        console.error("Erro ao atualizar status do convite:", error);
+      } else {
+        console.log("Status do convite atualizado para:", newStatus);
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar convite:", err);
+    }
+  };
+
   // Se já está logado e tem perfil, redirecionar
   useEffect(() => {
     const checkProfile = async () => {
@@ -72,6 +109,8 @@ const Invite = () => {
           .maybeSingle();
 
         if (profile) {
+          // Atualizar status do convite quando o usuário já tem perfil
+          await updateInviteStatus('used');
           navigate('/dashboard');
         }
       }
@@ -106,6 +145,14 @@ const Invite = () => {
               <XCircle className="h-4 w-4" />
               <AlertDescription>{error || "Convite inválido"}</AlertDescription>
             </Alert>
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => navigate('/')}
+                className="px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
+              >
+                Voltar para a página inicial
+              </button>
+            </div>
           </div>
         </main>
       </div>
@@ -137,6 +184,11 @@ const Invite = () => {
                   <p className="text-sm">
                     <strong>Email:</strong> {inviteData?.brand_email}
                   </p>
+                  {inviteData?.stylist_name && (
+                    <p className="text-sm">
+                      <strong>Estilista:</strong> {inviteData.stylist_name}
+                    </p>
+                  )}
                 </div>
                 <Alert>
                   <AlertDescription>
@@ -177,6 +229,7 @@ const Invite = () => {
             onBack={() => navigate('/')} 
             inviteCode={code}
             inviteData={inviteData}
+            onRegistrationSuccess={() => updateInviteStatus('used')}
           />
         </div>
       </main>
