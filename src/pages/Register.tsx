@@ -5,20 +5,25 @@ import BrandRegistration from "@/components/BrandRegistration";
 import StylistRegistration from "@/components/StylistRegistration";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const Register = () => {
   const [selectedType, setSelectedType] = useState<'stylist' | null>(null);
   const { user } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
 
-  // Redirect to auth if not logged in
+  // Redirect based on auth and profile status
   useEffect(() => {
     if (!user) {
       navigate("/auth");
+    } else if (!profileLoading && profile) {
+      // User is logged in and has profile, redirect to dashboard
+      navigate("/dashboard");
     }
-  }, [user, navigate]);
+  }, [user, profile, profileLoading, navigate]);
 
   const handleSelectType = (type: 'stylist') => {
     setSelectedType(type);
@@ -36,8 +41,8 @@ const Register = () => {
     return null;
   };
 
-  if (!user) {
-    return null; // Will redirect in useEffect
+  if (!user || profileLoading) {
+    return null; // Will redirect in useEffect or show loading
   }
 
   return (
