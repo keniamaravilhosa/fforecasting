@@ -8,7 +8,7 @@ interface Invite {
   invite_code: string;
   status: 'pending' | 'accepted' | 'expired' | 'used';
   created_at: string;
-  expires_at: string;
+  expires_at?: string;
 }
 
 export const useStylistInvites = (stylistId: string | null) => {
@@ -26,12 +26,15 @@ export const useStylistInvites = (stylistId: string | null) => {
       try {
         const { data, error } = await supabase
           .from('brand_invites')
-          .select('*')
+          .select('id, brand_name, brand_email, invite_code, status, created_at')
           .eq('stylist_id', stylistId)
           .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Error fetching invites:', error);
+          if (error.code === '42501') {
+            console.error('Permission denied - RLS policy issue');
+          }
         } else {
           setInvites(data || []);
         }
@@ -51,12 +54,15 @@ export const useStylistInvites = (stylistId: string | null) => {
     try {
       const { data, error } = await supabase
         .from('brand_invites')
-        .select('*')
+        .select('id, brand_name, brand_email, invite_code, status, created_at')
         .eq('stylist_id', stylistId)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error refreshing invites:', error);
+        if (error.code === '42501') {
+          console.error('Permission denied - RLS policy issue');
+        }
       } else {
         setInvites(data || []);
       }

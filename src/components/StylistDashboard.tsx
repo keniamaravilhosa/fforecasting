@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TrendsCarousel } from "@/components/ui/trendscarousel";
+import { Skeleton } from "@/components/ui/skeleton";
 import InviteBrandForm from "@/components/InviteBrandForm";
+
+const TrendsCarousel = lazy(() => import("@/components/ui/trendscarousel").then(module => ({ default: module.TrendsCarousel })));
 import { useStylistInvites } from "@/hooks/useStylistInvites";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,13 +101,36 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
     }
   ];
 
-  const copyInviteLink = (inviteCode: string) => {
+  const copyInviteLink = async (inviteCode: string) => {
     const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
-    navigator.clipboard.writeText(inviteUrl);
-    toast({
-      title: "Link copiado!",
-      description: "O link de convite foi copiado para sua área de transferência.",
-    });
+    
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(inviteUrl);
+      } else {
+        // Fallback para navegadores sem suporte à Clipboard API
+        const textArea = document.createElement("textarea");
+        textArea.value = inviteUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      
+      toast({
+        title: "Link copiado!",
+        description: "O link de convite foi copiado para sua área de transferência.",
+      });
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o link. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInviteSent = () => {
@@ -278,7 +303,14 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
 
           {/* ⭐ NOVO COMPONENTE DE TENDÊNCIAS */}
           <div className="mb-8">
-            <TrendsCarousel trends={trendsData} />
+            <Suspense fallback={
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            }>
+              <TrendsCarousel trends={trendsData} />
+            </Suspense>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
