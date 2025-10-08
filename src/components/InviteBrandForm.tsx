@@ -37,12 +37,11 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
   });
 
   const generateInviteCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
-    // Gerar exatamente 12 caracteres alfanuméricos
-    for (let i = 0; i < 12; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    // Método 1: Usando Math.random() - 12 caracteres exatos
+    const code = Math.random().toString(36).substring(2, 14).toUpperCase();
+    console.log("🔤 Código gerado:", code);
+    console.log("📏 Comprimento:", code.length);
+    console.log("✅ É alfanumérico?", /^[A-Z0-9]+$/.test(code));
     return code;
   };
 
@@ -62,13 +61,21 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
     setLoading(true);
     try {
       const inviteCode = generateInviteCode();
-      console.log("Código gerado:", inviteCode, "Comprimento:", inviteCode.length);
       
+      console.log("🎯 Dados do convite:", {
+        brandName: data.brandName,
+        brandEmail: data.brandEmail,
+        inviteCode: inviteCode,
+        codeLength: inviteCode.length,
+        stylistId: stylistId
+      });
+
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30); // Convite expira em 30 dias
+      expiresAt.setDate(expiresAt.getDate() + 30);
       
-      // Inserir convite na tabela brand_invites
-      const { error: insertError } = await supabase
+      console.log("🔄 Inserindo no banco de dados...");
+      
+      const { data: insertData, error: insertError } = await supabase
         .from('brand_invites')
         .insert({
           stylist_id: stylistId,
@@ -77,15 +84,50 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
           invite_code: inviteCode,
           status: 'pending',
           expires_at: expiresAt.toISOString(),
-        });
+        })
+        .select();
+
+      console.log("📋 Resposta completa:", { insertData, insertError });
 
       if (insertError) {
-        console.error("Erro do Supabase:", insertError);
-        throw insertError;
+        console.error("💥 ERRO DETALHADO:", {
+          code: insertError.code,
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint
+        });
+        
+        // Se for erro de validação, tentar abordagem alternativa
+        if (insertError.code === '23514' || insertError.message?.includes('12 alphanumeric')) {
+          console.log("🔄 Tentando abordagem alternativa...");
+          // Tentar com código mais longo
+          const alternativeCode = Math.random().toString(36).substring(2, 18).toUpperCase();
+          console.log("🔤 Código alternativo:", alternativeCode, "Length:", alternativeCode.length);
+          
+          const { error: altError } = await supabase
+            .from('brand_invites')
+            .insert({
+              stylist_id: stylistId,
+              brand_name: data.brandName,
+              brand_email: data.brandEmail,
+              invite_code: alternativeCode,
+              status: 'pending',
+              expires_at: expiresAt.toISOString(),
+            });
+            
+          if (altError) {
+            throw altError;
+          }
+          
+          const inviteLink = `${window.location.origin}/invite/${alternativeCode}`;
+          setGeneratedLink(inviteLink);
+        } else {
+          throw insertError;
+        }
+      } else {
+        const inviteLink = `${window.location.origin}/invite/${inviteCode}`;
+        setGeneratedLink(inviteLink);
       }
-
-      const inviteLink = `${window.location.origin}/invite/${inviteCode}`;
-      setGeneratedLink(inviteLink);
 
       toast({
         title: "Convite criado com sucesso!",
@@ -94,8 +136,9 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
 
       reset();
       onInviteSent?.();
+      
     } catch (error: any) {
-      console.error("Erro ao criar convite:", error);
+      console.error("❌ ERRO COMPLETO:", error);
       toast({
         title: "Erro ao criar convite",
         description: error.message || "Tente novamente mais tarde",
@@ -160,7 +203,6 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
           </Button>
         </form>
 
-        {/* Link gerado */}
         {generatedLink && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm font-medium text-green-800 mb-2">
