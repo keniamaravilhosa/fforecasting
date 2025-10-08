@@ -28,10 +28,17 @@ interface BrandRegistrationProps {
   onBack: () => void;
   inviteCode?: string;
   inviteData?: any;
-  onRegistrationSuccess?: () => void; // ← Adicionar esta prop
+  onRegistrationSuccess?: () => void;
+  onInviteUsed?: (inviteCode: string, brandId: string) => void; // ← Adicionar esta prop
 }
 
-const BrandRegistration = ({ onBack, inviteCode, inviteData, onRegistrationSuccess }: BrandRegistrationProps) => {
+const BrandRegistration = ({ 
+  onBack, 
+  inviteCode, 
+  inviteData, 
+  onRegistrationSuccess,
+  onInviteUsed 
+}: BrandRegistrationProps) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -64,64 +71,136 @@ const BrandRegistration = ({ onBack, inviteCode, inviteData, onRegistrationSucce
         }
       }
 
-      // Create profile first
+      // CORREÇÃO: Usar upsert em vez de insert para o profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
+          id: user.id, // ← CORREÇÃO: usar id em vez de user_id
           user_id: user.id,
           user_type: 'brand',
           full_name: data.brandName,
           email: user.email || '',
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
         })
         .select()
         .single();
 
-      if (profileError) throw profileError;
-
-      // Create brand data
-      const { error: brandError } = await supabase
-        .from('brands')
-        .insert({
-          profile_id: profile.id,
-          brand_name: data.brandName,
-          target_audience: data.targetAudience,
-          price_range: data.priceRange,
-          business_model: data.businessModel,
-          main_challenges: data.mainChallenges || null,
-        });
-
-      if (brandError) throw brandError;
-
-      // Se tiver convite, atualizar status para 'used'
-      if (inviteCode) {
-        const { error: updateError } = await supabase
-          .from('brand_invites')
-          .update({ 
-            status: 'used' as any,
-            brand_id: profile.id,
-            used_at: new Date().toISOString()
-          })
-          .eq('invite_code', inviteCode);
-
-        if (updateError) {
-          console.error("Erro ao atualizar convite:", updateError);
+      if (profileError) {
+        console.error('Erro no profile:', profileError);
+        // Se der erro de duplicidade, buscar o profile existente
+        if (profileError.code === '23505') {
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', user.id)
+            .single();
+          
+          if (existingProfile) {
+            // Continuar com o profile existente
+            await createBrandAndUpdateInvite(existingProfile.id, data);
+            return;
+          }
         }
+        throw profileError;
       }
 
-      toast.success("Cadastro realizado com sucesso!");
-      
-      // Chamar o callback de sucesso se existir
-      if (onRegistrationSuccess) {
-        onRegistrationSuccess();
-      }
-      
-      navigate("/dashboard");
+      await createBrandAndUpdateInvite(profile.id, data);
+
     } catch (error: any) {
       console.error('Error:', error);
       toast.error(error.message || "Erro ao criar conta. Tente novamente.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // CORREÇÃO: Função separada para criar brand e atualizar convite
+  const createBrandAndUpdateInvite = async (profileId: string, data: BrandFormData) => {
+    try {
+      // CORREÇÃO: Criar brand com retorno do ID
+      const { data: brand, error: brandError } = await supabase
+        .from('brands')
+        .insert({
+          profile_id: profileId,
+          brand_name: data.brandName,
+          target_audience: data.targetAudience,
+          price_range: data.priceRange,
+          business_model: data.businessModel,
+          main_challenges: data.mainChallenges || null,
+        })
+        .select()
+        .single(); // ← CORREÇÃO: .single() para pegar o ID da brand
+
+      if (brandError) {
+        console.error('Erro na brand:', brandError);
+        
+        // Se for erro de duplicidade, buscar a brand existente
+        if (brandError.code === '23505') {
+          const { data: existingBrand } = await supabase
+            .from('brands')
+            .select('id')
+            .eq('profile_id', profileId)
+            .single();
+          
+          if (existingBrand) {
+            // Usar brand existente e atualizar convite
+            await updateInviteStatus(existingBrand.id);
+            completeRegistration();
+            return;
+          }
+        }
+        throw brandError;
+      }
+
+      // CORREÇÃO: Atualizar convite com o ID da brand
+      await updateInviteStatus(brand.id);
+      completeRegistration();
+
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  // CORREÇÃO: Função separada para atualizar convite
+  const updateInviteStatus = async (brandId: string) => {
+    if (!inviteCode) return;
+
+    try {
+      // CORREÇÃO: Atualizar corretamente o convite
+      const { error: updateError } = await supabase
+        .from('brand_invites')
+        .update({ 
+          status: 'used',
+          brand_id: brandId, // ← CORREÇÃO: usar brandId (id da brands) em vez de profileId
+          updated_at: new Date().toISOString()
+        })
+        .eq('invite_code', inviteCode);
+
+      if (updateError) {
+        console.error("Erro ao atualizar convite:", updateError);
+        // Não falhar o processo todo se apenas a atualização do convite falhar
+      }
+
+      // CORREÇÃO: Chamar callback se existir
+      if (onInviteUsed) {
+        onInviteUsed(inviteCode, brandId);
+      }
+
+    } catch (error) {
+      console.error("Erro no update do convite:", error);
+    }
+  };
+
+  const completeRegistration = () => {
+    toast.success("Cadastro realizado com sucesso!");
+    
+    if (onRegistrationSuccess) {
+      onRegistrationSuccess();
+    }
+    
+    navigate("/dashboard");
   };
 
   return (
