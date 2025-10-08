@@ -1,264 +1,268 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Store } from "lucide-react";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-
-const brandSchema = z.object({
-  brandName: z.string().min(1, "Nome da marca é obrigatório"),
-  targetAudience: z.enum(['15-19_anos', '20-29_anos', '30-45_anos', '46-60_anos', '60+_anos']),
-  priceRange: z.enum(['popular_100', 'medio_300', 'alto_600', 'luxo']),
-  businessModel: z.enum(['b2b', 'b2c', 'marketplace', 'atacado_varejo']),
-  mainChallenges: z.string().optional(),
-});
-
-type BrandFormData = z.infer<typeof brandSchema>;
+// src/components/BrandRegistration.tsx
+import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface BrandRegistrationProps {
-  onBack: () => void;
-  inviteCode?: string;
-  inviteData?: any;
-  onRegistrationSuccess?: () => void; // ← Adicionar esta prop
+  inviteCode: string;
+  requiredEmail: string | null;
+  onSuccess: () => void;
+  onInviteUsed: (inviteCode: string, brandId: string) => void;
 }
 
-const BrandRegistration = ({ onBack, inviteCode, inviteData, onRegistrationSuccess }: BrandRegistrationProps) => {
-  const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
-  const navigate = useNavigate();
+interface BrandFormData {
+  brand_name: string;
+  brand_email: string;
+  business_model: 'b2b' | 'b2c' | 'marketplace' | 'atacado_varejo';
+  price_range: 'popular_100' | 'medio_300' | 'alto_600' | 'luxo';
+  target_audience: '15-19_anos' | '20-29_anos' | '30-45_anos' | '46-60_anos' | '60+_anos';
+  main_challenges?: string;
+}
 
-  const form = useForm<BrandFormData>({
-    resolver: zodResolver(brandSchema),
-    defaultValues: {
-      brandName: inviteData?.brand_name || "",
-      targetAudience: "20-29_anos",
-      priceRange: "medio_300",
-      businessModel: "b2c",
-      mainChallenges: "",
-    },
+export default function BrandRegistration({ 
+  inviteCode, 
+  requiredEmail, 
+  onSuccess,
+  onInviteUsed 
+}: BrandRegistrationProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<BrandFormData>({
+    brand_name: '',
+    brand_email: requiredEmail || '',
+    business_model: 'b2c',
+    price_range: 'medio_300',
+    target_audience: '20-29_anos',
+    main_challenges: ''
   });
 
-  const handleSubmit = async (data: BrandFormData) => {
-    if (!user) {
-      toast.error("Você precisa estar logado para continuar");
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleBrandCreation(formData);
+  };
 
-    setLoading(true);
-    
+  const handleBrandCreation = async (brandData: BrandFormData) => {
     try {
-      // Verificar se tem convite válido (se veio de /invite)
-      if (inviteCode && inviteData) {
-        // Verificar se o email do usuário corresponde ao email do convite
-        if (user.email !== inviteData.brand_email) {
-          throw new Error("Email não corresponde ao convite. Use o email: " + inviteData.brand_email);
-        }
+      setLoading(true);
+      setError(null);
+
+      // 1. Verificar usuário atual
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // 2. Verificar mismatch de email se houver requiredEmail
+      if (requiredEmail && user.email !== requiredEmail) {
+        throw new Error(`Este convite é específico para: ${requiredEmail}. Você está logado com: ${user.email}`);
       }
 
-      // Create profile first
-      const { data: profile, error: profileError } = await supabase
+      // 3. Criar perfil de marca se não existir
+      const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          user_id: user.id,
+        .upsert({
+          id: user.id,
+          email: user.email!,
+          full_name: brandData.brand_name,
           user_type: 'brand',
-          full_name: data.brandName,
-          email: user.email || '',
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
+
+      if (profileError) {
+        console.error('Erro no perfil:', profileError);
+        // Pode ser que o perfil já exista, continuar...
+      }
+
+      // 4. Criar a marca com retorno do ID
+      const { data: brand, error: brandError } = await supabase
+        .from('brands')
+        .insert({
+          brand_name: brandData.brand_name,
+          business_model: brandData.business_model,
+          price_range: brandData.price_range,
+          target_audience: brandData.target_audience,
+          main_challenges: brandData.main_challenges,
+          profile_id: user.id
         })
         .select()
         .single();
 
-      if (profileError) throw profileError;
-
-      // Create brand data
-      const { error: brandError } = await supabase
-        .from('brands')
-        .insert({
-          profile_id: profile.id,
-          brand_name: data.brandName,
-          target_audience: data.targetAudience,
-          price_range: data.priceRange,
-          business_model: data.businessModel,
-          main_challenges: data.mainChallenges || null,
-        });
-
-      if (brandError) throw brandError;
-
-      // Se tiver convite, atualizar status para 'used'
-      if (inviteCode) {
-        const { error: updateError } = await supabase
-          .from('brand_invites')
-          .update({ 
-            status: 'used' as any,
-            brand_id: profile.id,
-            used_at: new Date().toISOString()
-          })
-          .eq('invite_code', inviteCode);
-
-        if (updateError) {
-          console.error("Erro ao atualizar convite:", updateError);
+      if (brandError) {
+        console.error('Erro na marca:', brandError);
+        
+        // Se for erro de duplicidade, tentar buscar a marca existente
+        if (brandError.code === '23505') {
+          const { data: existingBrand } = await supabase
+            .from('brands')
+            .select('id')
+            .eq('profile_id', user.id)
+            .single();
+          
+          if (existingBrand) {
+            // Usar marca existente
+            await completeInviteProcess(inviteCode, existingBrand.id);
+            onSuccess();
+            return;
+          }
         }
+        
+        throw brandError;
       }
 
-      toast.success("Cadastro realizado com sucesso!");
-      
-      // Chamar o callback de sucesso se existir
-      if (onRegistrationSuccess) {
-        onRegistrationSuccess();
-      }
-      
-      navigate("/dashboard");
+      // 5. Completar o processo do convite
+      await completeInviteProcess(inviteCode, brand.id);
+
+      // 6. Sucesso
+      onSuccess();
+
     } catch (error: any) {
-      console.error('Error:', error);
-      toast.error(error.message || "Erro ao criar conta. Tente novamente.");
+      console.error('Erro na criação da marca:', error);
+      setError(error.message || 'Erro ao criar conta da marca');
     } finally {
       setLoading(false);
     }
   };
 
+  const completeInviteProcess = async (inviteCode: string, brandId: string) => {
+    // Atualizar o convite como usado
+    const { error: inviteUpdateError } = await supabase
+      .from('brand_invites')
+      .update({
+        status: 'used',
+        brand_id: brandId,
+        updated_at: new Date().toISOString()
+      })
+      .eq('invite_code', inviteCode);
+
+    if (inviteUpdateError) {
+      console.warn('Convite não pôde ser atualizado:', inviteUpdateError);
+      // Não falhar o processo todo se apenas a atualização do convite falhar
+    }
+
+    // Chamar callback
+    onInviteUsed(inviteCode, brandId);
+  };
+
+  const handleInputChange = (field: keyof BrandFormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   return (
-    <section className="py-12">
-      <div className="container px-4 md:px-6 max-w-2xl mx-auto">
-        <div className="mb-8">
-          <Button 
-            variant="ghost" 
-            onClick={onBack}
-            className="mb-4 text-terracotta hover:text-dark-terracotta"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto p-3 bg-accent rounded-full w-fit mb-4">
-                <Store className="h-6 w-6 text-terracotta" />
-              </div>
-              <CardTitle className="text-2xl">Cadastro da Marca</CardTitle>
-              <CardDescription>
-                Conte-nos sobre sua marca para personalizar sua experiência
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                {/* Basic Info */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Informações da Marca</h3>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="brandName">Nome da Marca *</Label>
-                    <Input
-                      {...form.register("brandName")}
-                      id="brandName"
-                      placeholder="Ex: Sua Marca Fashion"
-                    />
-                    {form.formState.errors.brandName && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.brandName.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Diagnostic Questions */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Diagnóstico da Marca</h3>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="targetAudience">Público-Alvo Principal *</Label>
-                    <Select value={form.watch("targetAudience")} onValueChange={(value) => form.setValue("targetAudience", value as any)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione seu público principal" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15-19_anos">15-19 anos</SelectItem>
-                        <SelectItem value="20-29_anos">20-29 anos</SelectItem>
-                        <SelectItem value="30-45_anos">30-45 anos</SelectItem>
-                        <SelectItem value="46-60_anos">46-60 anos</SelectItem>
-                        <SelectItem value="60+_anos">60+ anos</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.targetAudience && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.targetAudience.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="priceRange">Faixa de Preço *</Label>
-                    <Select value={form.watch("priceRange")} onValueChange={(value) => form.setValue("priceRange", value as any)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione sua faixa de preço" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="popular_100">Popular (até R$ 100)</SelectItem>
-                        <SelectItem value="medio_300">Médio (R$ 100-300)</SelectItem>
-                        <SelectItem value="alto_600">Alto (R$ 300-600)</SelectItem>
-                        <SelectItem value="luxo">Luxo (R$ 600+)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.priceRange && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.priceRange.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="businessModel">Modelo de Negócio *</Label>
-                    <Select value={form.watch("businessModel")} onValueChange={(value) => form.setValue("businessModel", value as any)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Como você vende?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="b2c">B2C (Direto ao Consumidor)</SelectItem>
-                        <SelectItem value="b2b">B2B (Atacado/Lojistas)</SelectItem>
-                        <SelectItem value="marketplace">Marketplaces</SelectItem>
-                        <SelectItem value="atacado_varejo">Atacado e Varejo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.businessModel && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.businessModel.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="mainChallenges">Principais Desafios (Opcional)</Label>
-                    <Textarea
-                      {...form.register("mainChallenges")}
-                      id="mainChallenges"
-                      placeholder="Conte-nos sobre os principais desafios da sua marca em relação a tendências..."
-                      rows={3}
-                    />
-                  </div>
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-terracotta hover:bg-dark-terracotta text-white"
-                  disabled={loading}
-                >
-                  {loading ? "Criando conta..." : "Criar Conta e Acessar Dashboard"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+    <div className="bg-white rounded-lg p-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <p className="text-red-800">{error}</p>
         </div>
-      </div>
-    </section>
-  );
-};
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Nome da Marca *
+          </label>
+          <input
+            type="text"
+            required
+            value={formData.brand_name}
+            onChange={(e) => handleInputChange('brand_name', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Digite o nome da sua marca"
+          />
+        </div>
 
-export default BrandRegistration;
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Email da Marca *
+          </label>
+          <input
+            type="email"
+            required
+            value={formData.brand_email}
+            onChange={(e) => handleInputChange('brand_email', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="email@marca.com"
+            disabled={!!requiredEmail}
+          />
+          {requiredEmail && (
+            <p className="text-sm text-gray-500 mt-1">
+              Email definido pelo convite
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Modelo de Negócio *
+          </label>
+          <select
+            value={formData.business_model}
+            onChange={(e) => handleInputChange('business_model', e.target.value as any)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="b2c">B2C (Varejo)</option>
+            <option value="b2b">B2B (Atacado)</option>
+            <option value="marketplace">Marketplace</option>
+            <option value="atacado_varejo">Atacado e Varejo</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Faixa de Preço *
+          </label>
+          <select
+            value={formData.price_range}
+            onChange={(e) => handleInputChange('price_range', e.target.value as any)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="popular_100">Até R$ 100</option>
+            <option value="medio_300">R$ 100 - R$ 300</option>
+            <option value="alto_600">R$ 300 - R$ 600</option>
+            <option value="luxo">Acima de R$ 600</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Público-Alvo *
+          </label>
+          <select
+            value={formData.target_audience}
+            onChange={(e) => handleInputChange('target_audience', e.target.value as any)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="15-19_anos">15-19 anos</option>
+            <option value="20-29_anos">20-29 anos</option>
+            <option value="30-45_anos">30-45 anos</option>
+            <option value="46-60_anos">46-60 anos</option>
+            <option value="60+_anos">60+ anos</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Principais Desafios
+          </label>
+          <textarea
+            value={formData.main_challenges}
+            onChange={(e) => handleInputChange('main_challenges', e.target.value)}
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Quais são os principais desafios da sua marca?"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Criando conta...' : 'Criar Conta da Marca'}
+        </button>
+      </form>
+    </div>
+  );
+}
