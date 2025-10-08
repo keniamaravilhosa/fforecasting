@@ -6,7 +6,7 @@ interface Invite {
   brand_name: string;
   brand_email: string;
   invite_code: string;
-  status: 'pending' | 'accepted' | 'expired';
+  status: 'pending' | 'accepted' | 'expired' | 'used';
   created_at: string;
   expires_at: string;
 }

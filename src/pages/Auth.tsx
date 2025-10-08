@@ -1,6 +1,7 @@
 // src/pages/Auth.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,38 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const inviteCode = location.state?.inviteCode;
+
+  useEffect(() => {
+    // Se o usuário já está logado, redireciona
+    const checkAuth = async () => {
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (profile) {
+          navigate('/dashboard');
+        } else if (inviteCode) {
+          navigate(`/invite/${inviteCode}`);
+        } else {
+          navigate('/register');
+        }
+      }
+    };
+    checkAuth();
+  }, [user, navigate, inviteCode]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +57,24 @@ const Auth = () => {
       const { error } = await signIn(email, password);
       if (error) {
         toast.error(error.message);
+      } else {
+        // Após login, verifica se tem convite
+        if (inviteCode) {
+          navigate(`/invite/${inviteCode}`);
+        } else {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+            .maybeSingle();
+
+          if (profile) {
+            navigate('/dashboard');
+          } else {
+            navigate('/register');
+          }
+        }
       }
-      // O redirecionamento é tratado automaticamente pelo AuthContext
-      // Se veio de um convite, vai para /invite/CODIGO
-      // Se não, verifica o perfil e redireciona para /dashboard ou /register
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer login");
     } finally {
@@ -61,10 +102,13 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Verifique seu email para confirmar a conta!");
-        // Limpar formulário
-        setEmail("");
-        setPassword("");
+        toast.success("Conta criada! Verifique seu email para confirmar.");
+        // Após signup, se tem convite, redireciona
+        if (inviteCode) {
+          setTimeout(() => {
+            navigate(`/invite/${inviteCode}`);
+          }, 2000);
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Erro ao criar conta");

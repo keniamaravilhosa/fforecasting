@@ -6,8 +6,9 @@ import Header from "@/components/Header";
 import BrandRegistration from "@/components/BrandRegistration";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Invite = () => {
   const { code } = useParams<{ code: string }>();
@@ -17,6 +18,7 @@ const Invite = () => {
   const [inviteValid, setInviteValid] = useState(false);
   const [inviteData, setInviteData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [emailMismatch, setEmailMismatch] = useState(false);
 
   useEffect(() => {
     const validateInvite = async () => {
@@ -32,10 +34,6 @@ const Invite = () => {
           .from("brand_invites")
           .select("*")
           .eq("invite_code", code)
-          // .eq("status", "pending")
-          .from('brand_invites')
-          .select('*')
-          .eq('invite_code', code)
           .single();
 
         if (fetchError || !data) {
@@ -52,8 +50,28 @@ const Invite = () => {
           return;
         }
 
+        // Se já foi usado
+        if (data.status === 'used') {
+          setError("Este convite já foi utilizado.");
+          setValidating(false);
+          return;
+        }
+
         setInviteData(data);
         setInviteValid(true);
+
+        // Se usuário está logado, verificar se o email bate
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profile && profile.email !== data.brand_email) {
+            setEmailMismatch(true);
+          }
+        }
       } catch (err) {
         console.error("Erro ao validar convite:", err);
         setError("Erro ao validar convite. Tente novamente.");
@@ -63,7 +81,7 @@ const Invite = () => {
     };
 
     validateInvite();
-  }, [code]);
+  }, [code, user]);
 
   // Função para atualizar o status do convite quando for utilizado
   const updateInviteStatus = async () => {
@@ -73,7 +91,7 @@ const Invite = () => {
       const { error } = await supabase
         .from('brand_invites')
         .update({ 
-          status: 'used',
+          status: 'used' as any,
           used_at: new Date().toISOString()
         })
         .eq('invite_code', code);
@@ -89,7 +107,7 @@ const Invite = () => {
   // Se já está logado e tem perfil, redirecionar
   useEffect(() => {
     const checkProfile = async () => {
-      if (user && !validating && inviteValid) {
+      if (user && !validating && inviteValid && !emailMismatch) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("*")
@@ -97,16 +115,15 @@ const Invite = () => {
           .maybeSingle();
 
         if (profile) {
+          toast.info("Você já possui cadastro ativo");
           navigate("/dashboard");
-          // Atualizar status do convite quando o usuário já tem perfil
           await updateInviteStatus();
-          navigate('/dashboard');
         }
       }
     };
 
     checkProfile();
-  }, [user, validating, inviteValid, navigate]);
+  }, [user, validating, inviteValid, emailMismatch, navigate]);
 
   if (validating) {
     return (
@@ -142,6 +159,48 @@ const Invite = () => {
                 Voltar para a página inicial
               </button>
             </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Se o email não bate, mostrar aviso
+  if (emailMismatch && user) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 py-12">
+          <div className="container px-4 md:px-6 max-w-2xl mx-auto">
+            <Alert className="bg-orange-50 border-orange-200">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <div className="space-y-4">
+                  <p className="font-semibold">Incompatibilidade de Email</p>
+                  <p>
+                    Este convite foi enviado para <strong>{inviteData?.brand_email}</strong>, 
+                    mas você está logado com outro email.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        navigate(`/auth`, { state: { inviteCode: code } });
+                      }}
+                      className="px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
+                    >
+                      Fazer logout e continuar
+                    </button>
+                    <button
+                      onClick={() => navigate('/')}
+                      className="px-4 py-2 border border-gray-300 hover:bg-gray-50 rounded-lg"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
           </div>
         </main>
       </div>
@@ -186,7 +245,7 @@ const Invite = () => {
                 </Alert>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigate("/auth")}
+                    onClick={() => navigate("/auth", { state: { inviteCode: code } })}
                     className="flex-1 px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
                   >
                     Criar Conta / Login
@@ -227,4 +286,3 @@ const Invite = () => {
 };
 
 export default Invite;
-

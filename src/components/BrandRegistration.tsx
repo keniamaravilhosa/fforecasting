@@ -97,7 +97,7 @@ const BrandRegistration = ({ onBack, inviteCode, inviteData, onRegistrationSucce
         const { error: updateError } = await supabase
           .from('brand_invites')
           .update({ 
-            status: 'used',
+            status: 'used' as any,
             brand_id: profile.id,
             used_at: new Date().toISOString()
           })

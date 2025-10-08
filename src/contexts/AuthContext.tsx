@@ -107,11 +107,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       password,
     });
 
-    if (!error && data.user) {
-      // Após login bem-sucedido, redireciona
-      await handleAuthRedirect(data.user);
-    }
-
     return { error };
   };
 

@@ -233,7 +233,7 @@ export type Database = {
         | "maio"
         | "body"
         | "saida_de_praia"
-      invite_status: "pending" | "accepted" | "expired"
+      invite_status: "pending" | "accepted" | "expired" | "used"
       life_style:
         | "classica"
         | "urbana"
@@ -435,7 +435,7 @@ export const Constants = {
         "body",
         "saida_de_praia",
       ],
-      invite_status: ["pending", "accepted", "expired"],
+      invite_status: ["pending", "accepted", "expired", "used"],
       life_style: [
         "classica",
         "urbana",

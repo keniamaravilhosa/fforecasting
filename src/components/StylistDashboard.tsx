@@ -113,12 +113,13 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
     refreshInvites();
   };
 
-  const acceptedInvites = invites.filter(inv => inv.status === 'accepted').length;
+  const acceptedInvites = invites.filter(inv => inv.status === 'accepted' || inv.status === 'used').length;
   const pendingInvites = invites.filter(inv => inv.status === 'pending').length;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'accepted':
+      case 'used':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'pending':
         return <Clock className="h-4 w-4 text-amber-600" />;
@@ -132,6 +133,7 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'accepted':
+      case 'used':
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-amber-100 text-amber-800';
@@ -371,6 +373,7 @@ const StylistDashboard = ({ hasPremiumAccess }: StylistDashboardProps) => {
                             <div className="text-right">
                               <Badge className={getStatusColor(invite.status)}>
                                 {invite.status === 'accepted' ? 'Aceito' : 
+                                 invite.status === 'used' ? 'Utilizado' :
                                  invite.status === 'pending' ? 'Pendente' : 'Expirado'}
                               </Badge>
                               <p className="text-xs text-muted-foreground mt-1">
