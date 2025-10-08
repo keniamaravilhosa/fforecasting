@@ -1,16 +1,15 @@
+// src/pages/Register.tsx
 import { useState } from "react";
 import Header from "@/components/Header";
 import UserTypeSelection from "@/components/UserTypeSelection";
-import BrandRegistration from "@/components/BrandRegistration";
 import StylistRegistration from "@/components/StylistRegistration";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const Register = () => {
-  const [selectedType, setSelectedType] = useState<'stylist' | 'brand' | null>(null);
+  const [selectedType, setSelectedType] = useState<'stylist' | null>(null);
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
@@ -25,7 +24,7 @@ const Register = () => {
     }
   }, [user, profile, profileLoading, navigate]);
 
-  const handleSelectType = (type: 'stylist' | 'brand') => {
+  const handleSelectType = (type: 'stylist') => {
     setSelectedType(type);
   };
 
@@ -36,10 +35,6 @@ const Register = () => {
 
     if (selectedType === 'stylist') {
       return <StylistRegistration onBack={() => setSelectedType(null)} />;
-    }
-
-    if (selectedType === 'brand') {
-      return <BrandRegistration onBack={() => setSelectedType(null)} />;
     }
 
     return null;
