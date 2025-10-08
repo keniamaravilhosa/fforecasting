@@ -28,9 +28,10 @@ interface BrandRegistrationProps {
   onBack: () => void;
   inviteCode?: string;
   inviteData?: any;
+  onRegistrationSuccess?: () => void; // ← Adicionar esta prop
 }
 
-const BrandRegistration = ({ onBack, inviteCode, inviteData }: BrandRegistrationProps) => {
+const BrandRegistration = ({ onBack, inviteCode, inviteData, onRegistrationSuccess }: BrandRegistrationProps) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ const BrandRegistration = ({ onBack, inviteCode, inviteData }: BrandRegistration
   const form = useForm<BrandFormData>({
     resolver: zodResolver(brandSchema),
     defaultValues: {
-      brandName: "",
+      brandName: inviteData?.brand_name || "",
       targetAudience: "20-29_anos",
       priceRange: "medio_300",
       businessModel: "b2c",
@@ -91,13 +92,14 @@ const BrandRegistration = ({ onBack, inviteCode, inviteData }: BrandRegistration
 
       if (brandError) throw brandError;
 
-      // Se tiver convite, atualizar status para 'accepted'
+      // Se tiver convite, atualizar status para 'used'
       if (inviteCode) {
         const { error: updateError } = await supabase
           .from('brand_invites')
           .update({ 
-            status: 'accepted',
-            brand_id: profile.id
+            status: 'used',
+            brand_id: profile.id,
+            used_at: new Date().toISOString()
           })
           .eq('invite_code', inviteCode);
 
@@ -107,6 +109,12 @@ const BrandRegistration = ({ onBack, inviteCode, inviteData }: BrandRegistration
       }
 
       toast.success("Cadastro realizado com sucesso!");
+      
+      // Chamar o callback de sucesso se existir
+      if (onRegistrationSuccess) {
+        onRegistrationSuccess();
+      }
+      
       navigate("/dashboard");
     } catch (error: any) {
       console.error('Error:', error);

@@ -1,3 +1,4 @@
+// src/pages/Invite.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +33,9 @@ const Invite = () => {
           .select("*")
           .eq("invite_code", code)
           // .eq("status", "pending")
+          .from('brand_invites')
+          .select('*')
+          .eq('invite_code', code)
           .single();
 
         if (fetchError || !data) {
@@ -61,6 +65,27 @@ const Invite = () => {
     validateInvite();
   }, [code]);
 
+  // Função para atualizar o status do convite quando for utilizado
+  const updateInviteStatus = async () => {
+    if (!code) return;
+
+    try {
+      const { error } = await supabase
+        .from('brand_invites')
+        .update({ 
+          status: 'used',
+          used_at: new Date().toISOString()
+        })
+        .eq('invite_code', code);
+
+      if (error) {
+        console.error("Erro ao atualizar status do convite:", error);
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar convite:", err);
+    }
+  };
+
   // Se já está logado e tem perfil, redirecionar
   useEffect(() => {
     const checkProfile = async () => {
@@ -73,6 +98,9 @@ const Invite = () => {
 
         if (profile) {
           navigate("/dashboard");
+          // Atualizar status do convite quando o usuário já tem perfil
+          await updateInviteStatus();
+          navigate('/dashboard');
         }
       }
     };
@@ -106,6 +134,14 @@ const Invite = () => {
               <XCircle className="h-4 w-4" />
               <AlertDescription>{error || "Convite inválido"}</AlertDescription>
             </Alert>
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => navigate('/')}
+                className="px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
+              >
+                Voltar para a página inicial
+              </button>
+            </div>
           </div>
         </main>
       </div>
@@ -137,6 +173,11 @@ const Invite = () => {
                   <p className="text-sm">
                     <strong>Email:</strong> {inviteData?.brand_email}
                   </p>
+                  {inviteData?.stylist_name && (
+                    <p className="text-sm">
+                      <strong>Estilista:</strong> {inviteData.stylist_name}
+                    </p>
+                  )}
                 </div>
                 <Alert>
                   <AlertDescription>
@@ -177,6 +218,7 @@ const Invite = () => {
             onBack={() => navigate("/")} 
             inviteCode={code}
             inviteData={inviteData}
+            onRegistrationSuccess={updateInviteStatus}
           />
         </div>
       </main>

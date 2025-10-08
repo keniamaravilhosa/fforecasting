@@ -37,11 +37,11 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
 
   const generateInviteCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'FFORECAST-';
-    for (let i = 0; i < 12; i++) {
+    let code = 'FFORECAST';
+    for (let i = 0; i < 6; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return code;
+    return code; // Resultado: FFORECAST + 6 chars = 15 caracteres
   };
 
   const onSubmit = async (data: InviteFormData) => {
@@ -49,7 +49,7 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
     try {
       const inviteCode = generateInviteCode();
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30); // Convite expira em 30 dias
+      expiresAt.setDate(expiresAt.getDate() + 30);
       
       // Inserir convite na tabela brand_invites
       const { error: insertError } = await supabase
@@ -58,9 +58,9 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
           stylist_id: stylistId,
           brand_name: data.brandName,
           brand_email: data.brandEmail,
-          invite_code: inviteCode, // Incluir o invite_code gerado
+          invite_code: inviteCode,
           status: 'pending',
-          expires_at: expiresAt.toISOString(), // Incluir a data de expiração
+          expires_at: expiresAt.toISOString(),
         });
 
       if (insertError) {
@@ -148,4 +148,3 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
 };
 
 export default InviteBrandForm;
-
