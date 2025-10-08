@@ -26,24 +26,24 @@ const Invite = () => {
       }
 
       try {
-        console.log("Buscando convite com código:", code);
+        console.log("🔍 Validando convite com código:", code);
         
-        // Buscar convite na tabela brand_invites - sem filtro de status inicial
+        // Buscar convite na tabela brand_invites - APENAS por invite_code
         const { data, error: fetchError } = await supabase
           .from('brand_invites')
           .select('*')
           .eq('invite_code', code)
           .single();
 
-        console.log("Resultado da busca:", data);
-        console.log("Erro da busca:", fetchError);
+        console.log("📋 Resultado da busca:", data);
+        console.log("❌ Erro da busca:", fetchError);
 
         if (fetchError) {
           console.error("Erro ao buscar convite:", fetchError);
-          if (fetchError.code === 'PGRST116') { // Código para "not found"
+          if (fetchError.code === 'PGRST116') {
             setError("Convite não encontrado. Verifique se o link está correto.");
           } else {
-            setError("Erro ao buscar convite: " + fetchError.message);
+            setError("Erro ao buscar convite. Tente novamente.");
           }
           setValidating(false);
           return;
@@ -55,6 +55,9 @@ const Invite = () => {
           return;
         }
 
+        console.log("📅 Data de expiração:", data.expires_at);
+        console.log("🎯 Status do convite:", data.status);
+
         // Verificar se já foi utilizado
         if (data.status === 'used' || data.status === 'redeemed') {
           setError("Este convite já foi utilizado");
@@ -65,8 +68,6 @@ const Invite = () => {
         // Verificar se expirou
         const expiresAt = new Date(data.expires_at);
         const now = new Date();
-        console.log("Data de expiração:", expiresAt);
-        console.log("Data atual:", now);
         
         if (expiresAt < now) {
           setError("Este convite expirou. Solicite um novo convite ao estilista.");
@@ -74,18 +75,11 @@ const Invite = () => {
           return;
         }
 
-        // Aceitar qualquer status que não seja usado/expired
-        // (pending, active, sent, etc.)
-        const validStatuses = ['pending', 'active', 'sent'];
-        if (!validStatuses.includes(data.status)) {
-          setError(`Status do convite inválido: ${data.status}`);
-          setValidating(false);
-          return;
-        }
-
-        console.log("Convite válido encontrado:", data);
+        // Se chegou aqui, o convite é válido
+        console.log("✅ Convite válido encontrado");
         setInviteData(data);
         setInviteValid(true);
+        
       } catch (err) {
         console.error("Erro ao validar convite:", err);
         setError("Erro interno ao validar convite. Tente novamente.");
@@ -98,30 +92,27 @@ const Invite = () => {
   }, [code]);
 
   // Função para atualizar o status do convite quando for utilizado
-  const updateInviteStatus = async (newStatus: 'used' | 'redeemed' = 'used') => {
+  const updateInviteStatus = async () => {
     if (!code) return;
 
     try {
-      console.log("Atualizando status do convite para:", newStatus);
+      console.log("🔄 Atualizando status do convite para 'used'");
       
       const { error } = await supabase
         .from('brand_invites')
         .update({ 
-          status: newStatus,
-          used_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          status: 'used',
+          used_at: new Date().toISOString()
         })
         .eq('invite_code', code);
 
       if (error) {
-        console.error("Erro ao atualizar status do convite:", error);
-        throw error;
+        console.error("❌ Erro ao atualizar status do convite:", error);
       } else {
-        console.log("Status do convite atualizado com sucesso para:", newStatus);
+        console.log("✅ Status do convite atualizado com sucesso");
       }
     } catch (err) {
-      console.error("Erro ao atualizar convite:", err);
-      throw err;
+      console.error("❌ Erro ao atualizar convite:", err);
     }
   };
 
@@ -130,6 +121,7 @@ const Invite = () => {
     const checkProfile = async () => {
       if (user && !validating && inviteValid) {
         try {
+          console.log("👤 Verificando se usuário já tem perfil...");
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -142,9 +134,8 @@ const Invite = () => {
           }
 
           if (profile) {
-            console.log("Perfil encontrado, atualizando convite e redirecionando...");
-            // Atualizar status do convite quando o usuário já tem perfil
-            await updateInviteStatus('used');
+            console.log("✅ Perfil encontrado, atualizando convite...");
+            await updateInviteStatus();
             navigate('/dashboard');
           }
         } catch (err) {
@@ -156,7 +147,6 @@ const Invite = () => {
     checkProfile();
   }, [user, validating, inviteValid, navigate]);
 
-  // ... resto do componente permanece igual
   if (validating) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -267,7 +257,7 @@ const Invite = () => {
             onBack={() => navigate('/')} 
             inviteCode={code}
             inviteData={inviteData}
-            onRegistrationSuccess={() => updateInviteStatus('used')}
+            onRegistrationSuccess={updateInviteStatus}
           />
         </div>
       </main>
