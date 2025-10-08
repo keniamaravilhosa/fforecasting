@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, Copy } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 
 const inviteSchema = z.object({
   brandName: z.string().min(2, "Nome da marca deve ter pelo menos 2 caracteres"),
@@ -25,7 +25,6 @@ interface InviteBrandFormProps {
 const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
   const {
     register,
@@ -37,45 +36,23 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
   });
 
   const generateInviteCode = () => {
-    // Método 1: Usando Math.random() - 12 caracteres exatos
-    const code = Math.random().toString(36).substring(2, 14).toUpperCase();
-    console.log("🔤 Código gerado:", code);
-    console.log("📏 Comprimento:", code.length);
-    console.log("✅ É alfanumérico?", /^[A-Z0-9]+$/.test(code));
-    return code;
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "Copiado!",
-        description: "Link copiado para a área de transferência",
-      });
-    } catch (err) {
-      console.error('Falha ao copiar: ', err);
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'FFORECAST';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    return code; // Resultado: FFORECAST + 6 chars = 15 caracteres
   };
 
   const onSubmit = async (data: InviteFormData) => {
     setLoading(true);
     try {
       const inviteCode = generateInviteCode();
-      
-      console.log("🎯 Dados do convite:", {
-        brandName: data.brandName,
-        brandEmail: data.brandEmail,
-        inviteCode: inviteCode,
-        codeLength: inviteCode.length,
-        stylistId: stylistId
-      });
-
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
       
-      console.log("🔄 Inserindo no banco de dados...");
-      
-      const { data: insertData, error: insertError } = await supabase
+      // Inserir convite na tabela brand_invites
+      const { error: insertError } = await supabase
         .from('brand_invites')
         .insert({
           stylist_id: stylistId,
@@ -84,63 +61,26 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
           invite_code: inviteCode,
           status: 'pending',
           expires_at: expiresAt.toISOString(),
-        })
-        .select();
-
-      console.log("📋 Resposta completa:", { insertData, insertError });
+        });
 
       if (insertError) {
-        console.error("💥 ERRO DETALHADO:", {
-          code: insertError.code,
-          message: insertError.message,
-          details: insertError.details,
-          hint: insertError.hint
-        });
-        
-        // Se for erro de validação, tentar abordagem alternativa
-        if (insertError.code === '23514' || insertError.message?.includes('12 alphanumeric')) {
-          console.log("🔄 Tentando abordagem alternativa...");
-          // Tentar com código mais longo
-          const alternativeCode = Math.random().toString(36).substring(2, 18).toUpperCase();
-          console.log("🔤 Código alternativo:", alternativeCode, "Length:", alternativeCode.length);
-          
-          const { error: altError } = await supabase
-            .from('brand_invites')
-            .insert({
-              stylist_id: stylistId,
-              brand_name: data.brandName,
-              brand_email: data.brandEmail,
-              invite_code: alternativeCode,
-              status: 'pending',
-              expires_at: expiresAt.toISOString(),
-            });
-            
-          if (altError) {
-            throw altError;
-          }
-          
-          const inviteLink = `${window.location.origin}/invite/${alternativeCode}`;
-          setGeneratedLink(inviteLink);
-        } else {
-          throw insertError;
-        }
-      } else {
-        const inviteLink = `${window.location.origin}/invite/${inviteCode}`;
-        setGeneratedLink(inviteLink);
+        throw insertError;
       }
 
       toast({
-        title: "Convite criado com sucesso!",
-        description: `Convite gerado para ${data.brandName}. Copie o link abaixo.`,
+        title: "Convite enviado!",
+        description: `Um convite foi criado para ${data.brandName}. Compartilhe o link de convite com a marca: ${window.location.origin}/invite/${inviteCode}`,
       });
+
+      // Exibir o link de convite para o estilista
+      alert(`Convite criado com sucesso! Compartilhe este link com a marca: ${window.location.origin}/invite/${inviteCode}`);
 
       reset();
       onInviteSent?.();
-      
     } catch (error: any) {
-      console.error("❌ ERRO COMPLETO:", error);
+      console.error("Erro ao criar convite:", error);
       toast({
-        title: "Erro ao criar convite",
+        title: "Erro ao enviar convite",
         description: error.message || "Tente novamente mais tarde",
         variant: "destructive",
       });
@@ -157,7 +97,7 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
           Crie um convite exclusivo para uma marca se cadastrar na plataforma
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="brandName">Nome da Marca</Label>
@@ -202,28 +142,6 @@ const InviteBrandForm = ({ stylistId, onInviteSent }: InviteBrandFormProps) => {
             )}
           </Button>
         </form>
-
-        {generatedLink && (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm font-medium text-green-800 mb-2">
-              Convite criado! Compartilhe este link:
-            </p>
-            <div className="flex items-center gap-2">
-              <Input
-                value={generatedLink}
-                readOnly
-                className="flex-1 text-sm"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => copyToClipboard(generatedLink)}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
