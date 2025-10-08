@@ -26,30 +26,15 @@ const Invite = () => {
       }
 
       try {
-        console.log("Buscando convite com código:", code);
-        
-        // Buscar convite na tabela brand_invites - sem filtro de status inicial
+        // Buscar convite na tabela brand_invites - REMOVIDO o filtro por status
         const { data, error: fetchError } = await supabase
           .from('brand_invites')
           .select('*')
           .eq('invite_code', code)
+          // .eq('status', 'pending') // REMOVIDO - busca qualquer status
           .single();
 
-        console.log("Resultado da busca:", data);
-        console.log("Erro da busca:", fetchError);
-
-        if (fetchError) {
-          console.error("Erro ao buscar convite:", fetchError);
-          if (fetchError.code === 'PGRST116') { // Código para "not found"
-            setError("Convite não encontrado. Verifique se o link está correto.");
-          } else {
-            setError("Erro ao buscar convite: " + fetchError.message);
-          }
-          setValidating(false);
-          return;
-        }
-
-        if (!data) {
+        if (fetchError || !data) {
           setError("Convite não encontrado");
           setValidating(false);
           return;
@@ -64,31 +49,24 @@ const Invite = () => {
 
         // Verificar se expirou
         const expiresAt = new Date(data.expires_at);
-        const now = new Date();
-        console.log("Data de expiração:", expiresAt);
-        console.log("Data atual:", now);
-        
-        if (expiresAt < now) {
+        if (expiresAt < new Date()) {
           setError("Este convite expirou. Solicite um novo convite ao estilista.");
           setValidating(false);
           return;
         }
 
-        // Aceitar qualquer status que não seja usado/expired
-        // (pending, active, sent, etc.)
-        const validStatuses = ['pending', 'active', 'sent'];
-        if (!validStatuses.includes(data.status)) {
-          setError(`Status do convite inválido: ${data.status}`);
+        // Verificar se está em status válido (pending ou active)
+        if (data.status !== 'pending' && data.status !== 'active') {
+          setError("Este convite não está mais válido");
           setValidating(false);
           return;
         }
 
-        console.log("Convite válido encontrado:", data);
         setInviteData(data);
         setInviteValid(true);
       } catch (err) {
         console.error("Erro ao validar convite:", err);
-        setError("Erro interno ao validar convite. Tente novamente.");
+        setError("Erro ao validar convite. Tente novamente.");
       } finally {
         setValidating(false);
       }
@@ -102,26 +80,21 @@ const Invite = () => {
     if (!code) return;
 
     try {
-      console.log("Atualizando status do convite para:", newStatus);
-      
       const { error } = await supabase
         .from('brand_invites')
         .update({ 
           status: newStatus,
-          used_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          used_at: new Date().toISOString()
         })
         .eq('invite_code', code);
 
       if (error) {
         console.error("Erro ao atualizar status do convite:", error);
-        throw error;
       } else {
-        console.log("Status do convite atualizado com sucesso para:", newStatus);
+        console.log("Status do convite atualizado para:", newStatus);
       }
     } catch (err) {
       console.error("Erro ao atualizar convite:", err);
-      throw err;
     }
   };
 
@@ -129,26 +102,16 @@ const Invite = () => {
   useEffect(() => {
     const checkProfile = async () => {
       if (user && !validating && inviteValid) {
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-          if (profileError) {
-            console.error("Erro ao verificar perfil:", profileError);
-            return;
-          }
-
-          if (profile) {
-            console.log("Perfil encontrado, atualizando convite e redirecionando...");
-            // Atualizar status do convite quando o usuário já tem perfil
-            await updateInviteStatus('used');
-            navigate('/dashboard');
-          }
-        } catch (err) {
-          console.error("Erro ao verificar perfil:", err);
+        if (profile) {
+          // Atualizar status do convite quando o usuário já tem perfil
+          await updateInviteStatus('used');
+          navigate('/dashboard');
         }
       }
     };
@@ -156,7 +119,6 @@ const Invite = () => {
     checkProfile();
   }, [user, validating, inviteValid, navigate]);
 
-  // ... resto do componente permanece igual
   if (validating) {
     return (
       <div className="flex flex-col min-h-screen">
