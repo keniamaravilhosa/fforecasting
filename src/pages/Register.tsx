@@ -22,7 +22,7 @@ const Register = () => {
       // User is logged in and has profile, redirect to dashboard
       navigate("/dashboard");
     }
-  }, [user, profile, profileLoading, navigate]);
+  }, [user, profile, profileLoading]); // Removed navigate from deps
 
   const handleSelectType = (type: 'stylist') => {
     setSelectedType(type);
@@ -41,7 +41,15 @@ const Register = () => {
   };
 
   if (!user || profileLoading) {
-    return null; // Will redirect in useEffect or show loading
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
+          <p className="text-xl font-semibold text-primary">Carregando...</p>
+          <p className="text-sm text-muted-foreground mt-2">Verificando seu perfil</p>
+        </div>
+      </div>
+    );
   }
 
   return (

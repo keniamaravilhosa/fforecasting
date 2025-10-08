@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AuthContextType {
   user: User | null;
@@ -33,34 +34,34 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = React.useState<Session | null>(null);
   const [loading, setLoading] = React.useState(true);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Função para lidar com redirecionamento após autenticação
   const handleAuthRedirect = async (currentUser: User) => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteCode = urlParams.get('invite');
-
+    const inviteCode = localStorage.getItem('pendingInviteCode');
+    
+    // Prefetch profile data for better performance
+    queryClient.prefetchQuery({
+      queryKey: ['profile', currentUser.id],
+      queryFn: async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+        return data;
+      },
+    });
+    
     if (inviteCode) {
-      // Se veio de um convite, redireciona para a página do convite
+      localStorage.removeItem('pendingInviteCode');
       navigate(`/invite/${inviteCode}`);
-    } else {
-      // Verificar se já tem perfil
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Erro ao verificar perfil:', error);
-        navigate('/register');
-      } else if (profile) {
-        // Já tem perfil, vai para dashboard
-        navigate('/dashboard');
-      } else {
-        // Não tem perfil, vai para registro
-        navigate('/register');
-      }
+      return;
     }
+
+    // Always redirect to /register after login
+    // The Register page will handle redirecting to dashboard if profile exists
+    navigate('/register');
   };
 
   React.useEffect(() => {

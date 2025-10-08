@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Profile {
   id: string;
@@ -12,38 +12,34 @@ interface Profile {
 
 export const useProfile = () => {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) {
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching profile:', error);
-        } else {
-          setProfile(data);
-        }
-      } catch (error) {
+  const queryClient = useQueryClient();
+  
+  const { data: profile, isLoading: loading } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
-      } finally {
-        setLoading(false);
+        throw error;
       }
-    };
+      
+      return data;
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+  });
 
-    fetchProfile();
-  }, [user]);
-
-  return { profile, loading, setProfile };
+  const setProfile = (newProfile: Profile | null) => {
+    queryClient.setQueryData(['profile', user?.id], newProfile);
+  };
+  
+  return { profile: profile ?? null, loading, setProfile };
 };
