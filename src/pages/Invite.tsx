@@ -1,476 +1,325 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+// src/pages/Invite.tsx
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import Header from "@/components/Header";
+import BrandRegistration from "@/components/BrandRegistration";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, XCircle, Loader2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+const Invite = () => {
+  const { code } = useParams<{ code: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [validating, setValidating] = useState(true);
+  const [inviteValid, setInviteValid] = useState(false);
+  const [inviteData, setInviteData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [emailMismatch, setEmailMismatch] = useState(false);
+
+  useEffect(() => {
+    const validateInvite = async () => {
+      if (!code) {
+        setError("Código de convite inválido");
+        setValidating(false);
+        return;
+      }
+
+      try {
+        // Se usuário não está logado, usar função pública de validação
+        if (!user) {
+          const { data: validationResult, error: rpcError } = await supabase
+            .rpc('validate_invite_code', { invite_code_param: code });
+
+          if (rpcError) {
+            console.error("Erro ao validar convite:", rpcError);
+            setError("Erro ao validar convite. Tente novamente.");
+            setValidating(false);
+            return;
+          }
+
+          // Type assertion for the RPC response
+          const result = validationResult as { valid: boolean; error?: string; required_email?: string };
+
+          if (!result.valid) {
+            switch (result.error) {
+              case 'invite_not_found':
+                setError("Convite não encontrado");
+                break;
+              case 'expired':
+                setError("Este convite expirou. Solicite um novo convite ao estilista.");
+                break;
+              case 'already_used':
+                setError("Este convite já foi utilizado.");
+                break;
+              default:
+                setError("Convite inválido");
+            }
+            setValidating(false);
+            return;
+          }
+
+          // Convite válido - armazenar apenas o email necessário
+          setInviteData({ brand_email: result.required_email || '' });
+          setInviteValid(true);
+          setValidating(false);
+          return;
+        }
+
+        // Se usuário está logado, buscar dados completos do convite
+        const { data, error: fetchError } = await supabase
+          .from("brand_invites")
+          .select("*")
+          .eq("invite_code", code)
+          .maybeSingle();
+
+        if (fetchError) {
+          console.error("Erro ao buscar convite:", fetchError);
+          setError("Erro ao validar convite. Tente novamente.");
+          setValidating(false);
+          return;
+        }
+
+        if (!data) {
+          setError("Convite não encontrado ou você não tem permissão para visualizá-lo");
+          setValidating(false);
+          return;
+        }
+
+        // Verificar se expirou
+        const expiresAt = new Date(data.expires_at);
+        if (expiresAt < new Date()) {
+          setError("Este convite expirou. Solicite um novo convite ao estilista.");
+          setValidating(false);
+          return;
+        }
+
+        // Se já foi usado
+        if (data.status === 'used' || data.status === 'accepted') {
+          setError("Este convite já foi utilizado.");
+          setValidating(false);
+          return;
+        }
+
+        setInviteData(data);
+        setInviteValid(true);
+
+        // Verificar se o email bate com o perfil do usuário
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile && profile.email !== data.brand_email) {
+          setEmailMismatch(true);
+        }
+      } catch (err) {
+        console.error("Erro ao validar convite:", err);
+        setError("Erro ao validar convite. Tente novamente.");
+      } finally {
+        setValidating(false);
+      }
+    };
+
+    validateInvite();
+  }, [code, user]);
+
+  // Função para atualizar o status do convite quando for utilizado
+  const updateInviteStatus = async () => {
+    if (!code) return;
+
+    try {
+      const { error } = await supabase
+        .from('brand_invites')
+        .update({ 
+          status: 'used' as any,
+          used_at: new Date().toISOString()
+        })
+        .eq('invite_code', code);
+
+      if (error) {
+        console.error("Erro ao atualizar status do convite:", error);
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar convite:", err);
+    }
+  };
+
+  // Se já está logado e tem perfil, redirecionar
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (user && !validating && inviteValid && !emailMismatch) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (profile) {
+          toast.info("Você já possui cadastro ativo");
+          navigate("/dashboard");
+          await updateInviteStatus();
+        }
+      }
+    };
+
+    checkProfile();
+  }, [user, validating, inviteValid, emailMismatch, navigate]);
+
+  if (validating) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Card className="max-w-md w-full mx-4">
+            <CardContent className="pt-6 text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-terracotta mx-auto mb-4" />
+              <p className="text-muted-foreground">Validando convite...</p>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
   }
-  public: {
-    Tables: {
-      brand_invites: {
-        Row: {
-          brand_email: string
-          brand_id: string | null
-          brand_name: string
-          created_at: string
-          expires_at: string
-          id: string
-          invite_code: string
-          status: Database["public"]["Enums"]["invite_status"]
-          stylist_id: string
-          updated_at: string
-        }
-        Insert: {
-          brand_email: string
-          brand_id?: string | null
-          brand_name: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          invite_code: string
-          status?: Database["public"]["Enums"]["invite_status"]
-          stylist_id: string
-          updated_at?: string
-        }
-        Update: {
-          brand_email?: string
-          brand_id?: string | null
-          brand_name?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          invite_code?: string
-          status?: Database["public"]["Enums"]["invite_status"]
-          stylist_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "brand_invites_brand_id_fkey"
-            columns: ["brand_id"]
-            isOneToOne: false
-            referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "brand_invites_stylist_id_fkey"
-            columns: ["stylist_id"]
-            isOneToOne: false
-            referencedRelation: "stylists"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      brands: {
-        Row: {
-          brand_name: string
-          business_model: Database["public"]["Enums"]["business_model"]
-          created_at: string
-          id: string
-          main_challenges: string | null
-          price_range: Database["public"]["Enums"]["price_range"]
-          profile_id: string
-          target_audience: Database["public"]["Enums"]["target_audience"]
-          updated_at: string
-        }
-        Insert: {
-          brand_name: string
-          business_model: Database["public"]["Enums"]["business_model"]
-          created_at?: string
-          id?: string
-          main_challenges?: string | null
-          price_range: Database["public"]["Enums"]["price_range"]
-          profile_id: string
-          target_audience: Database["public"]["Enums"]["target_audience"]
-          updated_at?: string
-        }
-        Update: {
-          brand_name?: string
-          business_model?: Database["public"]["Enums"]["business_model"]
-          created_at?: string
-          id?: string
-          main_challenges?: string | null
-          price_range?: Database["public"]["Enums"]["price_range"]
-          profile_id?: string
-          target_audience?: Database["public"]["Enums"]["target_audience"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "brands_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          updated_at: string
-          user_id: string
-          user_type: Database["public"]["Enums"]["user_type"]
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          full_name: string
-          id?: string
-          updated_at?: string
-          user_id: string
-          user_type: Database["public"]["Enums"]["user_type"]
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          full_name?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
-          user_type?: Database["public"]["Enums"]["user_type"]
-        }
-        Relationships: []
-      }
-      stylists: {
-        Row: {
-          created_at: string
-          experience: Database["public"]["Enums"]["experience_level"]
-          id: string
-          portfolio: string | null
-          premium_access: boolean
-          profile_id: string
-          specialties: string[] | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          experience: Database["public"]["Enums"]["experience_level"]
-          id?: string
-          portfolio?: string | null
-          premium_access?: boolean
-          profile_id: string
-          specialties?: string[] | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          experience?: Database["public"]["Enums"]["experience_level"]
-          id?: string
-          portfolio?: string | null
-          premium_access?: boolean
-          profile_id?: string
-          specialties?: string[] | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stylists_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      validate_invite_code: {
-        Args: { invite_code_param: string }
-        Returns: Json
-      }
-    }
-    Enums: {
-      brand_interests:
-        | "aumentar_ticket_medio"
-        | "atrair_publico"
-        | "consolidar_publico"
-        | "aumentar_categorias"
-        | "melhorar_producao"
-      business_model: "b2b" | "b2c" | "marketplace" | "atacado_varejo"
-      clients_inspiration:
-        | "instagram"
-        | "pinterest"
-        | "tik_tok"
-        | "famosos"
-        | "desfiles"
-      delivery: "3_dias" | "4_7_dias" | "8_15_dias" | "mais_15_dias"
-      experience_level:
-        | "iniciante"
-        | "1-3_anos"
-        | "3-5_anos"
-        | "5-10_anos"
-        | "mais_10_anos"
-      favorite_clothes:
-        | "calca_jeans"
-        | "saia_longa"
-        | "blusa_alça"
-        | "blusa_manga"
-        | "regata"
-        | "vestido_curto"
-        | "vestido_longo"
-        | "calça_alfaiataria"
-        | "short"
-        | "cropped"
-        | "bermuda"
-        | "legging"
-        | "saia_curta"
-        | "saia_reta"
-        | "camisa"
-        | "jaqueta"
-        | "blusa_frio"
-        | "biquine"
-        | "maio"
-        | "body"
-        | "saida_de_praia"
-      invite_status: "pending" | "accepted" | "expired" | "used"
-      life_style:
-        | "classica"
-        | "urbana"
-        | "fashionista"
-        | "minimalista"
-        | "executiva"
-        | "boemia"
-      price_range: "popular_100" | "medio_300" | "alto_600" | "luxo"
-      production_model:
-        | "pronta_entrega"
-        | "sob_encomenda"
-        | "pre_venda"
-        | "dropshipping"
-      segment:
-        | "luxo"
-        | "premium"
-        | "fast_fashion"
-        | "sustentavel"
-        | "praia"
-        | "fitness"
-        | "jeanswear"
-      target_audience:
-        | "15-19_anos"
-        | "20-29_anos"
-        | "30-45_anos"
-        | "46-60_anos"
-        | "60+_anos"
-      user_type: "brand" | "stylist"
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+
+  if (error || !inviteValid) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 py-12">
+          <div className="container px-4 md:px-6 max-w-2xl mx-auto">
+            <Alert variant="destructive">
+              <XCircle className="h-4 w-4" />
+              <AlertDescription>{error || "Convite inválido"}</AlertDescription>
+            </Alert>
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => navigate('/')}
+                className="px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
+              >
+                Voltar para a página inicial
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
-}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  // Se o email não bate, mostrar aviso
+  if (emailMismatch && user) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 py-12">
+          <div className="container px-4 md:px-6 max-w-2xl mx-auto">
+            <Alert className="bg-orange-50 border-orange-200">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <div className="space-y-4">
+                  <p className="font-semibold">Incompatibilidade de Email</p>
+                  <p>
+                    Este convite foi enviado para <strong>{inviteData?.brand_email}</strong>, 
+                    mas você está logado com outro email.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        navigate(`/auth`, { state: { inviteCode: code } });
+                      }}
+                      className="px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
+                    >
+                      Fazer logout e continuar
+                    </button>
+                    <button
+                      onClick={() => navigate('/')}
+                      className="px-4 py-2 border border-gray-300 hover:bg-gray-50 rounded-lg"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          </div>
+        </main>
+      </div>
+    );
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
 
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  // Se não está logado, mostrar que precisa criar conta primeiro
+  if (!user) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 py-12">
+          <div className="container px-4 md:px-6 max-w-2xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Convite Válido!
+                </CardTitle>
+                <CardDescription>
+                  Você foi convidado por um estilista para se cadastrar na FForecasting
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
+                  <p className="text-sm">
+                    <strong>Email necessário:</strong> {inviteData?.brand_email}
+                  </p>
+                </div>
+                <Alert>
+                  <AlertDescription>
+                    Para continuar, você precisa primeiro criar uma conta ou fazer login com o email: <strong>{inviteData?.brand_email}</strong>
+                  </AlertDescription>
+                </Alert>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate("/auth", { state: { inviteCode: code } })}
+                    className="flex-1 px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
+                  >
+                    Criar Conta / Login
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
 
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  // Mostrar formulário de registro da marca
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-1">
+        <div className="py-8">
+          <div className="container px-4 md:px-6 max-w-2xl mx-auto mb-6">
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Convite validado com sucesso! Complete seu cadastro abaixo.
+              </AlertDescription>
+            </Alert>
+          </div>
+          <BrandRegistration 
+            onBack={() => navigate("/")} 
+            inviteCode={code}
+            inviteData={inviteData}
+            onRegistrationSuccess={updateInviteStatus}
+          />
+        </div>
+      </main>
+    </div>
+  );
+};
 
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      brand_interests: [
-        "aumentar_ticket_medio",
-        "atrair_publico",
-        "consolidar_publico",
-        "aumentar_categorias",
-        "melhorar_producao",
-      ],
-      business_model: ["b2b", "b2c", "marketplace", "atacado_varejo"],
-      clients_inspiration: [
-        "instagram",
-        "pinterest",
-        "tik_tok",
-        "famosos",
-        "desfiles",
-      ],
-      delivery: ["3_dias", "4_7_dias", "8_15_dias", "mais_15_dias"],
-      experience_level: [
-        "iniciante",
-        "1-3_anos",
-        "3-5_anos",
-        "5-10_anos",
-        "mais_10_anos",
-      ],
-      favorite_clothes: [
-        "calca_jeans",
-        "saia_longa",
-        "blusa_alça",
-        "blusa_manga",
-        "regata",
-        "vestido_curto",
-        "vestido_longo",
-        "calça_alfaiataria",
-        "short",
-        "cropped",
-        "bermuda",
-        "legging",
-        "saia_curta",
-        "saia_reta",
-        "camisa",
-        "jaqueta",
-        "blusa_frio",
-        "biquine",
-        "maio",
-        "body",
-        "saida_de_praia",
-      ],
-      invite_status: ["pending", "accepted", "expired", "used"],
-      life_style: [
-        "classica",
-        "urbana",
-        "fashionista",
-        "minimalista",
-        "executiva",
-        "boemia",
-      ],
-      price_range: ["popular_100", "medio_300", "alto_600", "luxo"],
-      production_model: [
-        "pronta_entrega",
-        "sob_encomenda",
-        "pre_venda",
-        "dropshipping",
-      ],
-      segment: [
-        "luxo",
-        "premium",
-        "fast_fashion",
-        "sustentavel",
-        "praia",
-        "fitness",
-        "jeanswear",
-      ],
-      target_audience: [
-        "15-19_anos",
-        "20-29_anos",
-        "30-45_anos",
-        "46-60_anos",
-        "60+_anos",
-      ],
-      user_type: ["brand", "stylist"],
-    },
-  },
-} as const
+export default Invite;
