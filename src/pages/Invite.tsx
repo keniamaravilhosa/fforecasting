@@ -29,6 +29,10 @@ const Invite = () => {
       try {
         // Buscar convite na tabela brand_invites
         const { data, error: fetchError } = await supabase
+          .from("brand_invites")
+          .select("*")
+          .eq("invite_code", code)
+          // .eq("status", "pending")
           .from('brand_invites')
           .select('*')
           .eq('invite_code', code)
@@ -87,12 +91,13 @@ const Invite = () => {
     const checkProfile = async () => {
       if (user && !validating && inviteValid) {
         const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
           .maybeSingle();
 
         if (profile) {
+          navigate("/dashboard");
           // Atualizar status do convite quando o usuário já tem perfil
           await updateInviteStatus();
           navigate('/dashboard');
@@ -181,7 +186,7 @@ const Invite = () => {
                 </Alert>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigate('/auth')}
+                    onClick={() => navigate("/auth")}
                     className="flex-1 px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
                   >
                     Criar Conta / Login
@@ -210,7 +215,7 @@ const Invite = () => {
             </Alert>
           </div>
           <BrandRegistration 
-            onBack={() => navigate('/')} 
+            onBack={() => navigate("/")} 
             inviteCode={code}
             inviteData={inviteData}
             onRegistrationSuccess={updateInviteStatus}
@@ -222,3 +227,4 @@ const Invite = () => {
 };
 
 export default Invite;
+
