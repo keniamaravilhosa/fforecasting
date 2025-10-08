@@ -11,15 +11,9 @@ import { useEffect } from "react";
 
 const Register = () => {
   const [selectedType, setSelectedType] = useState<'stylist' | 'brand' | null>(null);
-  
-  const handleSelectType = (type: 'stylist') => {
-  setSelectedType(type);
-};
-
-// E no render, apenas StylistRegistration
-if (selectedType === 'stylist') {
-  return <StylistRegistration onBack={() => setSelectedType(null)} />;
-}
+  const { user } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
+  const navigate = useNavigate();
 
   // Redirect based on auth and profile status
   useEffect(() => {
