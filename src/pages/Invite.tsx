@@ -29,15 +29,62 @@ const Invite = () => {
       }
 
       try {
-        // Buscar convite na tabela brand_invites
+        // Se usuário não está logado, usar função pública de validação
+        if (!user) {
+          const { data: validationResult, error: rpcError } = await supabase
+            .rpc('validate_invite_code', { invite_code_param: code });
+
+          if (rpcError) {
+            console.error("Erro ao validar convite:", rpcError);
+            setError("Erro ao validar convite. Tente novamente.");
+            setValidating(false);
+            return;
+          }
+
+          // Type assertion for the RPC response
+          const result = validationResult as { valid: boolean; error?: string; required_email?: string };
+
+          if (!result.valid) {
+            switch (result.error) {
+              case 'invite_not_found':
+                setError("Convite não encontrado");
+                break;
+              case 'expired':
+                setError("Este convite expirou. Solicite um novo convite ao estilista.");
+                break;
+              case 'already_used':
+                setError("Este convite já foi utilizado.");
+                break;
+              default:
+                setError("Convite inválido");
+            }
+            setValidating(false);
+            return;
+          }
+
+          // Convite válido - armazenar apenas o email necessário
+          setInviteData({ brand_email: result.required_email || '' });
+          setInviteValid(true);
+          setValidating(false);
+          return;
+        }
+
+        // Se usuário está logado, buscar dados completos do convite
         const { data, error: fetchError } = await supabase
           .from("brand_invites")
           .select("*")
           .eq("invite_code", code)
-          .single();
+          .maybeSingle();
 
-        if (fetchError || !data) {
-          setError("Convite não encontrado ou já foi utilizado");
+        if (fetchError) {
+          console.error("Erro ao buscar convite:", fetchError);
+          setError("Erro ao validar convite. Tente novamente.");
+          setValidating(false);
+          return;
+        }
+
+        if (!data) {
+          setError("Convite não encontrado ou você não tem permissão para visualizá-lo");
           setValidating(false);
           return;
         }
@@ -51,7 +98,7 @@ const Invite = () => {
         }
 
         // Se já foi usado
-        if (data.status === 'used') {
+        if (data.status === 'used' || data.status === 'accepted') {
           setError("Este convite já foi utilizado.");
           setValidating(false);
           return;
@@ -60,17 +107,15 @@ const Invite = () => {
         setInviteData(data);
         setInviteValid(true);
 
-        // Se usuário está logado, verificar se o email bate
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('user_id', user.id)
-            .single();
+        // Verificar se o email bate com o perfil do usuário
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('user_id', user.id)
+          .single();
 
-          if (profile && profile.email !== data.brand_email) {
-            setEmailMismatch(true);
-          }
+        if (profile && profile.email !== data.brand_email) {
+          setEmailMismatch(true);
         }
       } catch (err) {
         console.error("Erro ao validar convite:", err);
@@ -227,16 +272,8 @@ const Invite = () => {
               <CardContent className="space-y-4">
                 <div className="p-4 bg-peach/10 border border-peach/20 rounded-lg">
                   <p className="text-sm">
-                    <strong>Marca:</strong> {inviteData?.brand_name}
+                    <strong>Email necessário:</strong> {inviteData?.brand_email}
                   </p>
-                  <p className="text-sm">
-                    <strong>Email:</strong> {inviteData?.brand_email}
-                  </p>
-                  {inviteData?.stylist_name && (
-                    <p className="text-sm">
-                      <strong>Estilista:</strong> {inviteData.stylist_name}
-                    </p>
-                  )}
                 </div>
                 <Alert>
                   <AlertDescription>

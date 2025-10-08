@@ -188,7 +188,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      validate_invite_code: {
+        Args: { invite_code_param: string }
+        Returns: Json
+      }
     }
     Enums: {
       brand_interests:
