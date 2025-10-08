@@ -34,21 +34,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = React.useState(true);
   const navigate = useNavigate();
 
-  // No handleLogin ou handleSignUp, após login bem-sucedido:
-const urlParams = new URLSearchParams(window.location.search);
-const inviteCode = urlParams.get('invite');
+  // Função para lidar com redirecionamento após autenticação
+  const handleAuthRedirect = async (currentUser: User) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteCode = urlParams.get('invite');
 
-if (inviteCode) {
-  navigate(`/invite/${inviteCode}`);
-} else {
-  // Verificar se já tem perfil, senão vai para /register
-  const { data: profile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
-  if (profile) {
-    navigate('/dashboard');
-  } else {
-    navigate('/register');
-  }
-}
+    if (inviteCode) {
+      // Se veio de um convite, redireciona para a página do convite
+      navigate(`/invite/${inviteCode}`);
+    } else {
+      // Verificar se já tem perfil
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Erro ao verificar perfil:', error);
+        navigate('/register');
+      } else if (profile) {
+        // Já tem perfil, vai para dashboard
+        navigate('/dashboard');
+      } else {
+        // Não tem perfil, vai para registro
+        navigate('/register');
+      }
     }
   };
 
