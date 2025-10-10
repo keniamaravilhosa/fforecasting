@@ -40,41 +40,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const handleAuthRedirect = async (currentUser: User) => {
     const inviteCode = localStorage.getItem('pendingInviteCode');
     
-    // Prefetch profile data for better performance
-    queryClient.prefetchQuery({
-      queryKey: ['profile', currentUser.id],
-      queryFn: async () => {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
-        return data;
-      },
-    });
-    
-    if (inviteCode) {
-      localStorage.removeItem('pendingInviteCode');
-      navigate(`/invite/${inviteCode}`);
-      return;
-    }
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .maybeSingle();
 
-    // Always redirect to /register after login
-    // The Register page will handle redirecting to dashboard if profile exists
-    navigate('/register');
+    if (profile) {
+      localStorage.removeItem('pendingInviteCode');
+      navigate('/dashboard');
+    } else if (inviteCode) {
+      navigate(`/invite/${inviteCode}`);
+    } else {
+      navigate('/register');
+    }
   };
 
   React.useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
 
         // Quando o usuário faz login, redireciona apropriadamente
         if (event === 'SIGNED_IN' && session?.user) {
-          await handleAuthRedirect(session.user);
+          setTimeout(() => {
+            handleAuthRedirect(session.user);
+          }, 0);
         }
       }
     );

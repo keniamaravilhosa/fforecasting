@@ -20,13 +20,13 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Armazenar inviteCode do state ou do sessionStorage
-  const inviteCode = location.state?.inviteCode || sessionStorage.getItem('inviteCode');
+  // Armazenar inviteCode do state ou do localStorage
+  const inviteCode = location.state?.inviteCode || localStorage.getItem('pendingInviteCode');
   
-  // Se veio inviteCode no state, salvar no sessionStorage
+  // Se veio inviteCode no state, salvar no localStorage
   useEffect(() => {
     if (location.state?.inviteCode) {
-      sessionStorage.setItem('inviteCode', location.state.inviteCode);
+      localStorage.setItem('pendingInviteCode', location.state.inviteCode);
     }
   }, [location.state?.inviteCode]);
 
@@ -34,7 +34,7 @@ const Auth = () => {
     // Se o usuário já está logado, redireciona
     const checkAuth = async () => {
       if (user) {
-        const savedInviteCode = sessionStorage.getItem('inviteCode');
+        const savedInviteCode = localStorage.getItem('pendingInviteCode');
         
         const { data: profile } = await supabase
           .from('profiles')
@@ -44,7 +44,7 @@ const Auth = () => {
 
         if (profile) {
           // Limpar invite code se já tem profile
-          sessionStorage.removeItem('inviteCode');
+          localStorage.removeItem('pendingInviteCode');
           navigate('/dashboard');
         } else if (savedInviteCode) {
           // Redirecionar para o convite se não tem profile
@@ -73,7 +73,7 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        const savedInviteCode = sessionStorage.getItem('inviteCode');
+        const savedInviteCode = localStorage.getItem('pendingInviteCode');
         
         // Após login, verifica se tem convite
         if (savedInviteCode) {
@@ -82,11 +82,11 @@ const Auth = () => {
           const { data: profile } = await supabase
             .from('profiles')
             .select('*')
-            .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+            .eq('user_id', user?.id)
             .maybeSingle();
 
           if (profile) {
-            sessionStorage.removeItem('inviteCode');
+            localStorage.removeItem('pendingInviteCode');
             navigate('/dashboard');
           } else {
             navigate('/register');
@@ -120,7 +120,7 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        const savedInviteCode = sessionStorage.getItem('inviteCode');
+        const savedInviteCode = localStorage.getItem('pendingInviteCode');
         
         toast.success("Conta criada! Verifique seu email para confirmar.");
         

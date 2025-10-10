@@ -29,97 +29,48 @@ const Invite = () => {
       }
 
       try {
-        // Se usuário não está logado, usar função pública de validação
-        if (!user) {
-          const { data: validationResult, error: rpcError } = await supabase
-            .rpc('validate_invite_code', { invite_code_param: code });
+        // SEMPRE usa a RPC para validar (evita problemas de RLS)
+        const { data, error } = await supabase.rpc('validate_invite_code', {
+          invite_code_param: code
+        });
 
-          if (rpcError) {
-            console.error("Erro ao validar convite:", rpcError);
-            setError("Erro ao validar convite. Tente novamente.");
-            setValidating(false);
-            return;
-          }
-
-          // Type assertion for the RPC response
-          const result = validationResult as { valid: boolean; error?: string; required_email?: string };
-
-          if (!result.valid) {
-            switch (result.error) {
-              case 'invite_not_found':
-                setError("Convite não encontrado");
-                break;
-              case 'expired':
-                setError("Este convite expirou. Solicite um novo convite ao estilista.");
-                break;
-              case 'already_used':
-                setError("Este convite já foi utilizado.");
-                break;
-              default:
-                setError("Convite inválido");
+        if (error) {
+          console.error('Error validating invite:', error);
+          setError("Erro ao validar convite");
+          setInviteValid(false);
+        } else if (data) {
+          // Type assertion para o resultado da RPC
+          const result = data as { valid: boolean; reason?: string; required_email?: string; brand_name?: string; stylist_id?: string };
+          
+          if (result.valid) {
+            setInviteData({
+              brand_name: result.brand_name,
+              brand_email: result.required_email,
+              stylist_id: result.stylist_id
+            });
+            
+            // Se está logado, verifica se o email corresponde
+            if (user && user.email !== result.required_email) {
+              setEmailMismatch(true);
             }
-            setValidating(false);
-            return;
+            
+            setInviteValid(true);
+          } else {
+            // Convite inválido
+            if (result.reason === 'expired') {
+              setError("Este convite expirou");
+            } else if (result.reason === 'already_used') {
+              setError("Este convite já foi utilizado");
+            } else {
+              setError("Convite não encontrado");
+            }
+            setInviteValid(false);
           }
-
-          // Convite válido - armazenar apenas o email necessário
-          setInviteData({ brand_email: result.required_email || '' });
-          setInviteValid(true);
-          setValidating(false);
-          return;
         }
-
-        // Se usuário está logado, buscar dados completos do convite
-        const { data, error: fetchError } = await supabase
-          .from("brand_invites")
-          .select("*")
-          .eq("invite_code", code)
-          .maybeSingle();
-
-        if (fetchError) {
-          console.error("Erro ao buscar convite:", fetchError);
-          setError("Erro ao validar convite. Tente novamente.");
-          setValidating(false);
-          return;
-        }
-
-        if (!data) {
-          setError("Convite não encontrado ou você não tem permissão para visualizá-lo");
-          setValidating(false);
-          return;
-        }
-
-        // Verificar se expirou
-        const expiresAt = new Date(data.expires_at);
-        if (expiresAt < new Date()) {
-          setError("Este convite expirou. Solicite um novo convite ao estilista.");
-          setValidating(false);
-          return;
-        }
-
-        // Se já foi usado
-        if (data.status === 'used' || data.status === 'accepted') {
-          setError("Este convite já foi utilizado.");
-          setValidating(false);
-          return;
-        }
-
-        setInviteData(data);
-        setInviteValid(true);
-
-        // Verificar se o email bate com o perfil do usuário
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profile && profile.email !== data.brand_email) {
-          setEmailMismatch(true);
-        }
-      } catch (err) {
-        console.error("Erro ao validar convite:", err);
-        setError("Erro ao validar convite. Tente novamente.");
+      } catch (error) {
+        console.error('Error in invite validation:', error);
+        setError("Erro ao validar convite");
+        setInviteValid(false);
       } finally {
         setValidating(false);
       }
@@ -160,8 +111,8 @@ const Invite = () => {
           .maybeSingle();
 
         if (profile) {
-          // Limpar sessionStorage do inviteCode se já tem profile
-          sessionStorage.removeItem('inviteCode');
+          // Limpar localStorage do inviteCode se já tem profile
+          localStorage.removeItem('pendingInviteCode');
           toast.info("Você já possui cadastro ativo");
           navigate("/dashboard");
         }
@@ -283,7 +234,10 @@ const Invite = () => {
                 </Alert>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigate("/auth", { state: { inviteCode: code } })}
+                    onClick={() => {
+                      localStorage.setItem('pendingInviteCode', code);
+                      navigate("/auth", { state: { inviteCode: code } });
+                    }}
                     className="flex-1 px-4 py-2 bg-terracotta hover:bg-dark-terracotta text-white rounded-lg"
                   >
                     Criar Conta / Login

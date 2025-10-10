@@ -194,8 +194,8 @@ const BrandRegistration = ({
   };
 
   const completeRegistration = () => {
-    // Limpar sessionStorage do inviteCode após cadastro completo
-    sessionStorage.removeItem('inviteCode');
+    // Limpar localStorage do inviteCode após cadastro completo
+    localStorage.removeItem('pendingInviteCode');
     
     toast.success("Cadastro realizado com sucesso!");
     
@@ -203,7 +203,9 @@ const BrandRegistration = ({
       onRegistrationSuccess();
     }
     
-    navigate("/dashboard");
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 1500);
   };
 
   return (
