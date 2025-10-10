@@ -22,7 +22,7 @@ const Index = () => {
               <Button size="lg" variant="secondary" className="bg-white text-terracotta hover:bg-cream" onClick={() => navigate('/register')}>
                 Começar Gratuitamente
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button size="lg" variant="outline" className="border-white text-terracotta hover:bg-white/10">
                 Falar com Especialista
               </Button>
             </div>
