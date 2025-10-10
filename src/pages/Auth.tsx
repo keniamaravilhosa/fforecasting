@@ -91,7 +91,7 @@ const Auth = () => {
     }
 
     if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres");
+      toast.error("A senha deve ter pelo menos 6 caracteres, letras maiúsculas, minúsculas e caracteres especiais.");
       return;
     }
 
