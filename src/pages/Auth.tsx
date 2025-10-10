@@ -239,7 +239,7 @@ const Auth = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Use pelo menos 6 caracteres
+                        Use pelo menos 6 caracteres, letras maiúsculas, minúsculas e caracteres especiais.
                       </p>
                     </div>
                     
