@@ -19,12 +19,23 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const inviteCode = location.state?.inviteCode;
+  
+  // Armazenar inviteCode do state ou do sessionStorage
+  const inviteCode = location.state?.inviteCode || sessionStorage.getItem('inviteCode');
+  
+  // Se veio inviteCode no state, salvar no sessionStorage
+  useEffect(() => {
+    if (location.state?.inviteCode) {
+      sessionStorage.setItem('inviteCode', location.state.inviteCode);
+    }
+  }, [location.state?.inviteCode]);
 
   useEffect(() => {
     // Se o usuário já está logado, redireciona
     const checkAuth = async () => {
       if (user) {
+        const savedInviteCode = sessionStorage.getItem('inviteCode');
+        
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -32,16 +43,20 @@ const Auth = () => {
           .maybeSingle();
 
         if (profile) {
+          // Limpar invite code se já tem profile
+          sessionStorage.removeItem('inviteCode');
           navigate('/dashboard');
-        } else if (inviteCode) {
-          navigate(`/invite/${inviteCode}`);
+        } else if (savedInviteCode) {
+          // Redirecionar para o convite se não tem profile
+          navigate(`/invite/${savedInviteCode}`);
         } else {
+          // Sem convite, ir para registro de estilista
           navigate('/register');
         }
       }
     };
     checkAuth();
-  }, [user, navigate, inviteCode]);
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,9 +73,11 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        const savedInviteCode = sessionStorage.getItem('inviteCode');
+        
         // Após login, verifica se tem convite
-        if (inviteCode) {
-          navigate(`/invite/${inviteCode}`);
+        if (savedInviteCode) {
+          navigate(`/invite/${savedInviteCode}`);
         } else {
           const { data: profile } = await supabase
             .from('profiles')
@@ -69,6 +86,7 @@ const Auth = () => {
             .maybeSingle();
 
           if (profile) {
+            sessionStorage.removeItem('inviteCode');
             navigate('/dashboard');
           } else {
             navigate('/register');
@@ -102,12 +120,16 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        const savedInviteCode = sessionStorage.getItem('inviteCode');
+        
         toast.success("Conta criada! Verifique seu email para confirmar.");
-        // Após signup, se tem convite, redireciona
-        if (inviteCode) {
+        
+        // Após signup, se tem convite, redireciona IMEDIATAMENTE
+        if (savedInviteCode) {
+          // Pequeno delay para mostrar a mensagem de sucesso
           setTimeout(() => {
-            navigate(`/invite/${inviteCode}`);
-          }, 2000);
+            navigate(`/invite/${savedInviteCode}`);
+          }, 1000);
         }
       }
     } catch (error: any) {

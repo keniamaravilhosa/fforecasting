@@ -160,9 +160,10 @@ const Invite = () => {
           .maybeSingle();
 
         if (profile) {
+          // Limpar sessionStorage do inviteCode se já tem profile
+          sessionStorage.removeItem('inviteCode');
           toast.info("Você já possui cadastro ativo");
           navigate("/dashboard");
-          await updateInviteStatus();
         }
       }
     };
