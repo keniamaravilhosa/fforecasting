@@ -65,11 +65,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Quando o usuário faz login, redireciona apropriadamente
+        // CORREÇÃO: Não redirecionar automaticamente durante fluxo de reset de senha
         if (event === 'SIGNED_IN' && session?.user) {
-          setTimeout(() => {
-            handleAuthRedirect(session.user);
-          }, 0);
+          // Verificar se está no fluxo de reset de senha
+          const isPasswordReset = window.location.search.includes('reset=true');
+          if (!isPasswordReset) {
+            setTimeout(() => {
+              handleAuthRedirect(session.user);
+            }, 0);
+          }
+          // Se for reset de senha, não fazemos nada - deixa o usuário na página de reset
         }
       }
     );
