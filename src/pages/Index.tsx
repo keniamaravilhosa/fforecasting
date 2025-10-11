@@ -23,7 +23,7 @@ const Index = () => {
                 Começar Gratuitamente
               </Button>
              <a
-  href="https://api.whatsapp.com/send?phone=5511932763486&text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20a%20plataforma%20de%20tend%C3%AAncias"
+  href="https://api.whatsapp.com/send?phone=5511932763486&text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20a%20plataforma%20de%20tend%C3%AAncias."
   target="_blank"
   rel="noopener noreferrer"
 >
