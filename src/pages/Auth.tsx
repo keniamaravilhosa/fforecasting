@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +17,11 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const { signIn, signUp, resetPassword, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -29,6 +34,14 @@ const Auth = () => {
       localStorage.setItem('pendingInviteCode', location.state.inviteCode);
     }
   }, [location.state?.inviteCode]);
+
+  // Detectar se é um reset de senha
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('reset') === 'true') {
+      setShowResetForm(true);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     // Se o usuário já está logado, redireciona
@@ -139,6 +152,138 @@ const Auth = () => {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail) {
+      toast.error("Digite seu email");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      toast.error("Digite um email válido");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await resetPassword(resetEmail);
+      if (error) {
+        toast.error("Erro ao enviar email de recuperação");
+      } else {
+        toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+        setShowForgotPassword(false);
+        setResetEmail("");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar email");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newPassword) {
+      toast.error("Digite a nova senha");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Senha atualizada com sucesso!");
+        setShowResetForm(false);
+        setNewPassword("");
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao atualizar senha");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Se está no fluxo de reset de senha, mostrar apenas o formulário de nova senha
+  if (showResetForm) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 flex items-center justify-center py-12 bg-gradient-to-b from-peach/10 to-background">
+          <div className="container px-4 md:px-6 max-w-md">
+            <Card className="shadow-lg">
+              <CardHeader className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 bg-terracotta rounded-full flex items-center justify-center">
+                  <Lock className="h-6 w-6 text-white" />
+                </div>
+                <CardTitle className="text-2xl font-bold">Redefinir Senha</CardTitle>
+                <CardDescription className="text-base">
+                  Digite sua nova senha abaixo
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="pt-6">
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password" className="text-sm font-medium">
+                      Nova Senha
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="new-password"
+                        type="password"
+                        placeholder="Mínimo 6 caracteres"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="pl-10 h-11"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Use pelo menos 6 caracteres, letras maiúsculas, minúsculas e caracteres especiais.
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full h-11 bg-terracotta hover:bg-dark-terracotta text-white font-medium"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Atualizando...
+                      </>
+                    ) : (
+                      "Atualizar Senha"
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -202,6 +347,15 @@ const Auth = () => {
                           className="pl-10 h-11"
                           required
                         />
+                      </div>
+                      <div className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => setShowForgotPassword(true)}
+                          className="text-sm text-terracotta hover:text-dark-terracotta hover:underline"
+                        >
+                          Esqueci minha senha
+                        </button>
                       </div>
                     </div>
                     
@@ -293,6 +447,66 @@ const Auth = () => {
           </Card>
         </div>
       </main>
+
+      {/* Dialog de Recuperação de Senha */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recuperar Senha</DialogTitle>
+            <DialogDescription>
+              Digite seu email para receber instruções de recuperação de senha
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleResetPassword} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email" className="text-sm font-medium">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="pl-10 h-11"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setResetEmail("");
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                className="flex-1 bg-terracotta hover:bg-dark-terracotta text-white"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  "Enviar"
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
