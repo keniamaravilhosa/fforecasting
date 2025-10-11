@@ -48,7 +48,7 @@ const Index = () => {
             <div className="space-y-4">
               <h3 className="font-heading font-semibold text-terracotta">FForecasting</h3>
               <p className="text-sm text-muted-foreground">
-                Transformando tendências em insights acionáveis para marcas de moda feminina.
+                Transformando dados em informações estratégicas para marcas de moda.
               </p>
             </div>
             <div className="space-y-4">
