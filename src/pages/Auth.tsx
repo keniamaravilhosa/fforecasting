@@ -43,8 +43,13 @@ const Auth = () => {
     }
   }, [location.search]);
 
+  // CORREÇÃO: Prevenir redirecionamento automático durante reset de senha
   useEffect(() => {
-    // Se o usuário já está logado, redireciona
+    // Não redirecionar se está no fluxo de reset de senha
+    if (showResetForm) {
+      return;
+    }
+    
     const checkAuth = async () => {
       if (user) {
         const savedInviteCode = localStorage.getItem('pendingInviteCode');
@@ -69,7 +74,7 @@ const Auth = () => {
       }
     };
     checkAuth();
-  }, [user, navigate]);
+  }, [user, navigate, showResetForm]); // Adicionar showResetForm como dependência
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,6 +189,7 @@ const Auth = () => {
     }
   };
 
+  // CORREÇÃO: Fazer logout após atualização de senha bem-sucedida
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -207,10 +213,14 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Senha atualizada com sucesso!");
+        toast.success("Senha atualizada com sucesso! Faça login com sua nova senha.");
+        
+        // CORREÇÃO: Fazer logout para forçar novo login
+        await supabase.auth.signOut();
+        
         setShowResetForm(false);
         setNewPassword("");
-        navigate('/dashboard');
+        navigate('/auth'); // Volta para tela de login, não dashboard
       }
     } catch (error: any) {
       toast.error(error.message || "Erro ao atualizar senha");
