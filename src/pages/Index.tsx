@@ -22,9 +22,20 @@ const Index = () => {
               <Button size="lg" variant="secondary" className="bg-white text-terracotta hover:bg-cream" onClick={() => navigate('/register')}>
                 Começar Gratuitamente
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-terracotta hover:bg-white/10" onClick={() => navigate('https://api.whatsapp.com/send?phone=5511932763486&text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20a%20plataforma%20de%20tend%C3%AAncias')}>
-                Falar com Especialista
-              </Button>
+             <a
+  href="https://api.whatsapp.com/send?phone=5511932763486&text=Ol%C3%A1,%20gostaria%20de%20saber%20mais%20sobre%20a%20plataforma%20de%20tend%C3%AAncias"
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <Button
+    size="lg"
+    variant="outline"
+    className="border-white text-terracotta hover:bg-white/10"
+  >
+    Falar com Especialista
+  </Button>
+</a>
+
             </div>
           </div>
         </section>
