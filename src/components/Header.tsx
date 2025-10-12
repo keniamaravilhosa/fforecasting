@@ -14,6 +14,21 @@ const Header = () => {
     navigate("/");
   };
 
+  const scrollToSection = (sectionId: string) => {
+    // Se não estiver na homepage, navegar primeiro
+    if (window.location.pathname !== '/') {
+      navigate('/');
+      // Aguardar navegação e depois fazer scroll
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    } else {
+      const element = document.getElementById(sectionId);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -26,15 +41,24 @@ const Header = () => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
+          <button 
+            onClick={() => scrollToSection('features')} 
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
             Recursos
-          </a>
-          <a href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">
+          </button>
+          <button 
+            onClick={() => scrollToSection('how-it-works')} 
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
             Como Funciona
-          </a>
-          <a href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">
+          </button>
+          <button 
+            onClick={() => scrollToSection('pricing')} 
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
             Preços
-          </a>
+          </button>
         </nav>
 
         <div className="flex items-center space-x-4">
